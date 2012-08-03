@@ -305,7 +305,8 @@ class PassServer < Sinatra::Base
   #
   
   get "/pass.pkpass" do
-    [200, '<a href="/1.pkpass">Download your pass</a>']
+    @pass_serial_number = 1
+    erb :pass
   end
   
   get "/:serial_number.pkpass" do
