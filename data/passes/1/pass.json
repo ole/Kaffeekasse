@@ -3,12 +3,12 @@
   "formatVersion": 1,
   "organizationName": "CodeKollektiv",
   "serialNumber": "1",
-  "teamIdentifier": "DK9N2M2GK6",
+  "teamIdentifier": "UQBP8YQ495",
   "webServiceURL": "http://tiefflieger.local:4567/",
   "authenticationToken": "30c4cb4ba863fa9d7687959d8fbc6f0c",
   "description": "Balance Card for CodeKollektiv",
-  "foregroundColor": "rgb(22, 55, 110)",
-  "backgroundColor": "rgb(50, 91, 185)",
+  "foregroundColor": "#FFFFFF",
+  "backgroundColor": "#631313",
   "logoText": "CodeKollektiv",
   "locations": [
     {
@@ -16,24 +16,26 @@
       "longitude": 13.384972
     }
   ],
+  "barcode": {
+    "messageEncoding": "utf-8",
+    "format": "PKBarcodeFormatPDF417",
+    "message": "Ole Begemann"
+  },
   "storeCard": {
     "primaryFields": [
       {
-        "key": "username",
-        "label": "User Name",
-        "value": "ole"
-      },
+        "key": "balance",
+        "label": "Balance",
+        "value": 100.0,
+        "currencyCode": "EUR",
+        "changeMessage": "Balance updated to %@."
+      }
+    ],
+    "secondaryFields": [
       {
         "key": "fullName",
         "label": "Name",
         "value": "Ole Begemann"
-      },
-      {
-        "key": "balance",
-        "label": "Balance",
-        "value": 10.0,
-        "currencyCode": "EUR",
-        "changeMessage": "Balance updated to %@."
       }
     ]
   }
