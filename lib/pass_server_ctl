@@ -101,7 +101,7 @@ class ReferenceServerSetup
     passes = self.db[:passes]
     if passes.count < 1
       puts "Inserting a sample pass"
-      add_pass("sample", "30c4cb4ba863fa9d7687959d8fbc6f0c", self.pass_type_identifier)
+      add_pass("1", "30c4cb4ba863fa9d7687959d8fbc6f0c", self.pass_type_identifier)
     end
   end
   
@@ -118,7 +118,7 @@ class ReferenceServerSetup
   
   def update_sample_pass_json
     # Read in the pass json
-    json_file_path = File.dirname(File.expand_path(__FILE__)) + "/../data/passes/sample/pass.json"
+    json_file_path = File.dirname(File.expand_path(__FILE__)) + "/../data/passes/1/pass.json"
     pass_json = JSON.parse(File.read(json_file_path))
     pass_json["webServiceURL"] = "http://#{self.hostname}:#{self.port}/"
     pass_json["passTypeIdentifier"] = self.pass_type_identifier
