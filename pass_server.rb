@@ -305,21 +305,13 @@ class PassServer < Sinatra::Base
   #
   
   get "/pass.pkpass" do
-    redirect "/sample.pkpass"
+    redirect "/1.pkpass"
   end
   
   get "/:serial_number.pkpass" do
     # Read in the pass json
     json_file_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes/#{params[:serial_number]}/pass.json"
     pass_json = JSON.parse(File.read(json_file_path))
-    
-    # Update the gate information
-    if RUBY_VERSION == "1.8.7"
-      gate_number = (1..99).to_a.choice.to_s
-    else
-      gate_number = (1..99).to_a.sample.to_s
-    end
-    pass_json["boardingPass"]["headerFields"].select{|i| i["key"] == "gate"}.first["value"] = gate_number
     
     # Write out the updated JSON
     File.open(json_file_path, "w") do |f|
