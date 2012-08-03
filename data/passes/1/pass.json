@@ -1,0 +1,40 @@
+{
+  "passTypeIdentifier": "pass.com.codekollektiv.balance",
+  "formatVersion": 1,
+  "organizationName": "CodeKollektiv",
+  "serialNumber": "1",
+  "teamIdentifier": "DK9N2M2GK6",
+  "webServiceURL": "http://tiefflieger.local:4567/",
+  "authenticationToken": "30c4cb4ba863fa9d7687959d8fbc6f0c",
+  "description": "Balance Card for CodeKollektiv",
+  "foregroundColor": "rgb(22, 55, 110)",
+  "backgroundColor": "rgb(50, 91, 185)",
+  "logoText": "CodeKollektiv",
+  "locations": [
+    {
+      "latitude": 52.497181,
+      "longitude": 13.384972
+    }
+  ],
+  "storeCard": {
+    "primaryFields": [
+      {
+        "key": "username",
+        "label": "User Name",
+        "value": "ole"
+      },
+      {
+        "key": "fullName",
+        "label": "Name",
+        "value": "Ole Begemann"
+      },
+      {
+        "key": "balance",
+        "label": "Balance",
+        "value": 10.0,
+        "currencyCode": "EUR",
+        "changeMessage": "Balance updated to %@."
+      }
+    ]
+  }
+}
