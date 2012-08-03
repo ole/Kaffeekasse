@@ -305,7 +305,7 @@ class PassServer < Sinatra::Base
   #
   
   get "/pass.pkpass" do
-    redirect "/1.pkpass"
+    [200, '<a href="/1.pkpass">Download your pass</a>']
   end
   
   get "/:serial_number.pkpass" do
@@ -313,6 +313,9 @@ class PassServer < Sinatra::Base
     json_file_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes/#{params[:serial_number]}/pass.json"
     pass_json = JSON.parse(File.read(json_file_path))
     
+    # Update the pass's JSON contents
+    # pass_json["boardingPass"]["headerFields"].select{|i| i["key"] == "gate"}.first["value"] = gate_number
+
     # Write out the updated JSON
     File.open(json_file_path, "w") do |f|
       f.write JSON.pretty_generate(pass_json)
