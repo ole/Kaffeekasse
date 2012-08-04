@@ -9,4 +9,6 @@ puts "Please enter your certificate password: "
 password_input = gets.chomp
 PassServer.set :certificate_password, password_input
 
+use Rack::MethodOverride
+
 run PassServer

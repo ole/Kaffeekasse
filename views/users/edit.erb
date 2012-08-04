@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <title>Edit <%= @user[:name] %></title>
+  <meta name = "viewport" content = "width=device-width, initial-scale=1.0, user-scalable=no">
+  <style type="text/css" media="screen">
+    body, html {
+      font-size: 16px;
+      font-family: "Helvetica Neue";
+    }
+  </style>
+</head>
+<body>
+  <form action="/users/<%= @user[:id] %>" method="post">
+    <input name="_method" value="put" type="hidden"/>
+    <p>
+      <label>Name</label><br/>
+      <input type="text" name="user[name]" value="<%= @user[:name] %>">
+    </p>
+    <p>
+      <label>E-Mail</label><br/>
+      <input type="text" name="user[email]" value="<%= @user[:email] %>">
+    </p>
+    <p>
+      <label>Account Balance (EUR)</label><br/>
+      <input type="text" name="user[account_balance]" value="<%= @user[:account_balance] %>">
+    </p>
+    <p>
+      <input type="submit" name="commit" value="Save">
+    </p>
+  </form>
+</body>
+</html>

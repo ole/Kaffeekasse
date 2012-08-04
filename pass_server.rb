@@ -304,6 +304,42 @@ class PassServer < Sinatra::Base
   # Please protect your user's data.
   #
   
+  get "/users" do
+    @users = @db[:users].order(:name).all
+    erb :'users/index'
+  end
+
+  get "/users/new" do
+    erb :'users/new'
+  end
+
+  post "/users" do
+    @users = @db[:users]
+    @users.insert(params[:user])
+    redirect "/users"
+  end
+
+  get "/users/:user_id" do
+    @user = @db[:users].where(:id => params[:user_id]).first
+    erb :'users/show'
+  end
+  
+  get "/users/:user_id/edit" do
+    @user = @db[:users].where(:id => params[:user_id]).first
+    erb :'users/edit'
+  end
+
+  put "/users/:user_id" do
+    @user = @db[:users].where(:id => params[:user_id])
+    @user.update(params[:user])
+    redirect "/users"
+  end
+
+  delete "/users/:user_id" do
+    @db[:users].where(:id => params[:user_id]).delete
+    redirect "/users"
+  end
+
   get "/pass.pkpass" do
     @pass_serial_number = 1
     erb :pass
