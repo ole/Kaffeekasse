@@ -51,20 +51,66 @@ require 'yaml'
 require 'json'
 require 'socket'
 require 'sign_pass'
+require 'securerandom'
 
 class PassServer < Sinatra::Base
   attr_accessor :certificate_password
+  attr_accessor :hostname, :port, :pass_type_identifier
+
   configure do
     mime_type :pkpass, 'application/vnd.apple.pkpass'
   end
   
+  def setup_hostname
+    self.hostname = "tiefflieger.local"
+  end
+  
+  def setup_webserver_port
+    self.port = 4567
+  end
+  
+  def setup_pass_type_identifier    
+    self.pass_type_identifier = "pass.com.codekollektiv.balance"
+  end
+  
+  def get_certificate_path
+    certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
+    certs = Dir.glob("#{certDirectory}/*.p12")
+    if  certs.count ==0
+      puts "Couldn't find a certificate at #{certDirectory}"
+      puts "Exiting"
+      Process.exit
+    else
+      certificate_path = certs[0]
+    end
+  end
+
   before do
+    setup_hostname
+    setup_webserver_port
+    setup_pass_type_identifier
+
     # Load in the pass data before each request
     @db = Sequel.sqlite("data/pass_server.sqlite3")
     @passes ||= @db[:passes]
     @registrations ||= @db[:registrations]
   end
   
+
+  def add_pass_for_user(user_id)
+    serial_number = SecureRandom.hex
+    authentication_token = SecureRandom.hex
+    add_pass(serial_number, authentication_token, "pass.com.codekollektiv.balance", user_id)
+  end
+
+  def add_pass(serial_number, authentication_token, pass_type_id, user_id)
+    passes = @db[:passes]
+    now = DateTime.now
+    passes.insert(:serial_number => serial_number, :authentication_token => authentication_token, :pass_type_id => pass_type_id, :user_id => user_id, :created_at => now, :updated_at => now)
+    puts "<#Pass serial_number: #{serial_number} authentication_token: #{authentication_token} pass_type_id: #{pass_type_id} user_id: #{user_id}>"
+  end
+
+
   
   # Registration
   # register a device to receive push notifications for a pass
@@ -315,7 +361,8 @@ class PassServer < Sinatra::Base
 
   post "/users" do
     @users = @db[:users]
-    @users.insert(params[:user])
+    new_user_id = @users.insert(params[:user])
+    add_pass_for_user(new_user_id)
     redirect "/users"
   end
 
@@ -340,28 +387,46 @@ class PassServer < Sinatra::Base
     redirect "/users"
   end
 
-  get "/pass.pkpass" do
-    @pass_serial_number = 1
-    erb :pass
-  end
-  
-  get "/:serial_number.pkpass" do
-    # Read in the pass json
-    json_file_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes/#{params[:serial_number]}/pass.json"
-    pass_json = JSON.parse(File.read(json_file_path))
+  get "/users/:user_id/pass.pkpass" do
+    # Load pass data from database
+    user = @db[:users].where[:id => params[:user_id]]
+    pass = @db[:passes].where[:user_id => user[:id]]
+    pass_id = pass[:id]
+
+    passes_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes"
+    template_folder_path = passes_folder_path + "/template"
+    target_folder_path = passes_folder_path + "/#{pass_id}"
     
-    # Update the pass's JSON contents
-    # pass_json["boardingPass"]["headerFields"].select{|i| i["key"] == "gate"}.first["value"] = gate_number
+    # Delete pass folder if it already exists
+    if (Dir.exists?(target_folder_path))
+      puts "Deleting existing pass data"
+      FileUtils.remove_dir(target_folder_path)
+    end
+
+    # Copy pass files from template folder
+    puts "Creating pass data from template"
+    FileUtils.cp_r template_folder_path + "/.", target_folder_path
+
+    # Modify the pass json
+    puts "Updating pass data"
+    json_file_path = target_folder_path + "/pass.json"
+    pass_json = JSON.parse(File.read(json_file_path))
+    pass_json["passTypeIdentifier"] = self.pass_type_identifier
+    pass_json["serialNumber"] = pass[:serial_number]
+    pass_json["authenticationToken"] = pass[:authentication_token]
+    pass_json["webServiceURL"] = "http://#{self.hostname}:#{self.port}/"
+    pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
+    pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
 
     # Write out the updated JSON
     File.open(json_file_path, "w") do |f|
       f.write JSON.pretty_generate(pass_json)
     end
-    
+
     # Prepare for pass signing
-    pass_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes/#{params[:serial_number]}"
+    pass_folder_path = target_folder_path
     pass_signing_certificate_path = get_certificate_path
-    pass_output_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes/#{params[:serial_number]}.pkpass"
+    pass_output_path = passes_folder_path + "/#{pass_id}.pkpass"
     
     # Remove the old pass if it exists
     if File.exists?(pass_output_path)
@@ -372,10 +437,8 @@ class PassServer < Sinatra::Base
     pass_signer = SignPass.new(pass_folder_path, pass_signing_certificate_path, settings.certificate_password, pass_output_path)
     pass_signer.sign_pass!
     
-    
     # Send the pass file
     send_file(pass_output_path, :type => :pkpass)
-    
   end
   
   ###
