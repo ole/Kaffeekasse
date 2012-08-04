@@ -60,9 +60,9 @@ class PassServer < Sinatra::Base
   
   before do
     # Load in the pass data before each request
-    DB = Sequel.sqlite("data/pass_server.sqlite3")
-    @passes ||= DB[:passes]
-    @registrations ||= DB[:registrations]
+    @db = Sequel.sqlite("data/pass_server.sqlite3")
+    @passes ||= @db[:passes]
+    @registrations ||= @db[:registrations]
   end
   
   
