@@ -224,11 +224,7 @@ class PassServer < Sinatra::Base
   end
 
   post "/users" do
-    now = DateTime.now
-    params[:user][:created_at] = now
-    params[:user][:updated_at] = now
-    new_user_id = self.users.insert(params[:user])
-    add_pass_for_user(new_user_id)
+    add_user_with_params(params[:user])
     redirect "/users"
   end
 
@@ -243,23 +239,12 @@ class PassServer < Sinatra::Base
   end
 
   put "/users/:user_id" do
-    user = self.users.where(:id => params[:user_id])
-    now = DateTime.now
-    params[:user][:updated_at] = now
-    user.update(params[:user])
-
-    # Also update updated_at field of user's pass
-    pass = self.passes.where(:user_id => params[:user_id])
-    pass.update(:updated_at => now)
-
-    # Send push notification
-    push_update_for_pass(pass.first[:id])
-
+    update_user_with_params(params[:user_id], params[:user])
     redirect "/users"
   end
 
   delete "/users/:user_id" do
-    self.users.where(:id => params[:user_id]).delete
+    delete_user(params[:user_id])
     redirect "/users"
   end
 
@@ -274,6 +259,40 @@ class PassServer < Sinatra::Base
 
   private
   
+  def add_user(email, name, account_balance)
+    p = { :email => email, :name => name, :account_balance => account_balance }
+    add_user_with_params(p)
+  end
+
+  def add_user_with_params(p)
+    now = DateTime.now
+    p[:created_at] = now
+    p[:updated_at] = now
+    self.users.insert(p)
+
+    # Also create a pass for the new user
+    add_pass_for_user(new_user_id)
+  end
+
+  def update_user_with_params(user_id, p)
+    now = DateTime.now
+    p[:updated_at] = now
+    user = self.users.where(:id => user_id)
+    user.update(p)
+  
+    # Also update updated_at field of user's pass
+    pass = self.passes.where(:user_id => user_id)
+    pass.update(:updated_at => now)
+
+    # Send push notification
+    pass_id = pass.first[:id]
+    push_update_for_pass(pass_id)
+  end
+
+  def delete_user(user_id)
+    self.users.where(:id => user_id).delete
+  end
+
   def add_pass_for_user(user_id)
     serial_number = new_serial_number
     auth_token = new_authentication_token
