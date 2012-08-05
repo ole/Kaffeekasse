@@ -305,6 +305,7 @@ class PassServer < Sinatra::Base
       pass_json["serialNumber"] = pass[:serial_number]
       pass_json["authenticationToken"] = pass[:authentication_token]
       pass_json["webServiceURL"] = "http://#{self.hostname}:#{self.port}/"
+      pass_json["barcode"]["message"] = pass[:serial_number]
       pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
       pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
 
@@ -462,6 +463,7 @@ class PassServer < Sinatra::Base
     pass_json["serialNumber"] = pass[:serial_number]
     pass_json["authenticationToken"] = pass[:authentication_token]
     pass_json["webServiceURL"] = "http://#{self.hostname}:#{self.port}/"
+    pass_json["barcode"]["message"] = pass[:serial_number]
     pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
     pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
 

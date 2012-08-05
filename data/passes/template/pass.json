@@ -19,7 +19,7 @@
   "barcode": {
     "messageEncoding": "utf-8",
     "format": "PKBarcodeFormatQR",
-    "message": "Ole Begemann"
+    "message": "---"
   },
   "storeCard": {
     "primaryFields": [
