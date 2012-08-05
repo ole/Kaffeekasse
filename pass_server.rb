@@ -24,20 +24,6 @@ class PassServer < Sinatra::Base
   end
   
 
-  def add_pass_for_user(user_id)
-    serial_number = SecureRandom.hex
-    authentication_token = SecureRandom.hex
-    add_pass(serial_number, authentication_token, "pass.com.codekollektiv.balance", user_id)
-  end
-
-  def add_pass(serial_number, authentication_token, pass_type_id, user_id)
-    now = DateTime.now
-    self.passes.insert(:serial_number => serial_number, :authentication_token => authentication_token, :pass_type_id => pass_type_id, :user_id => user_id, :created_at => now, :updated_at => now)
-    puts "<#Pass serial_number: #{serial_number} authentication_token: #{authentication_token} pass_type_id: #{pass_type_id} user_id: #{user_id}>"
-  end
-
-
-  
   # Registration
   # register a device to receive push notifications for a pass
   #
@@ -56,24 +42,19 @@ class PassServer < Sinatra::Base
   # --> if registration succeeded: 201
   # --> if this serial number was already registered for this device: 304
   # --> if not authorized: 401
-  
+  #
   post '/v1/devices/:device_id/registrations/:pass_type_id/:serial_number' do
-    puts "Handling registration request..."
-    # validate that the request is authorized to deal with the pass referenced
     puts "#<RegistrationRequest device_id: #{params[:device_id]}, pass_type_id: #{params[:pass_type_id]}, serial_number: #{params[:serial_number]}, authentication_token: #{authentication_token}, push_token: #{push_token}>"
-    if self.passes.where(:serial_number => params[:serial_number]).where(:authentication_token => authentication_token).first
-      
+    
+    # Validate that the request is authorized to deal with the pass referenced
+    if is_auth_token_valid?(params[:serial_number], params[:pass_type_id], authentication_token)
       puts '[ ok ] Pass and authentication token match.'
       
       # Validate that the device has not previously registered
-      # Note: this is done with a composite key that is combination of the device_id and the pass serial_number
-      uuid = params[:device_id] + "-" + params[:serial_number]
-      if self.registrations.where(:uuid => uuid).count < 1
-        
-        puts '[ ok ] New registration, creating.'
-
+      if !device_has_registration_for_serial_number?(params[:device_id], params[:serial_number])
         # No registration found, lets add the device
-        self.registrations.insert(:uuid => uuid, :device_id => params[:device_id], :pass_type_id => params[:pass_type_id], :push_token => push_token, :serial_number => params[:serial_number])
+        puts '[ ok ] Registering device.'
+        add_device_registration(params[:device_id], push_token, params[:pass_type_id], params[:serial_number])
         
         # Return a 201 CREATED status
         status 201
@@ -93,7 +74,7 @@ class PassServer < Sinatra::Base
 
   end
    
-   
+
   # Updatable passes
   #
   # get all serial #s associated with a device for passes that need an update
@@ -108,26 +89,21 @@ class PassServer < Sinatra::Base
   # --> if there are no matching passes: 204
   # --> if unknown device identifier: 404
   #
-  #
   get '/v1/devices/:device_id/registrations/:pass_type_id?' do
-    puts "Handling updates request..."
+    puts "#<UpdateRequest device_id: #{params[:device_id]}, pass_type_id: #{params[:pass_type_id]}#{", passesUpdatedSince: " + params[:passesUpdatedSince] if params[:passesUpdatedSince] && params[:passesUpdatedSince] != ""}>"
+
     # Check first that the device has registered with the service
-    if self.registrations.where(:device_id => params[:device_id]).count > 0
-      
-      # The device is registered with the service
+    if device_has_any_registrations?(params[:device_id])
       puts '[ ok ] Device registration found.'
       
       # Find the registrations for the device
-      registered_serial_numbers = self.registrations.where(:device_id => params[:device_id], :pass_type_id => params[:pass_type_id]).collect{|r| r[:serial_number]}
-      
       # The passesUpdatedSince param is optional for scoping the update query
+      updated_since = nil;
       if params[:passesUpdatedSince] && params[:passesUpdatedSince] != ""
         updated_since = DateTime.strptime(params[:passesUpdatedSince], '%s')
-        registered_passes = self.passes.where(:serial_number => registered_serial_numbers).filter('updated_at IS NULL OR updated_at >= ?', updated_since)
-      else
-        registered_passes = self.passes.where(:serial_number => registered_serial_numbers)
       end
-      
+      registered_passes = registered_passes_for_device(params[:device_id], params[:pass_type_id], updated_since)
+
       # Are there passes that this device should recieve updates for?
       if registered_passes.count > 0
         # Found passes that could be updated for this device
@@ -135,15 +111,13 @@ class PassServer < Sinatra::Base
         
         # Build the response object
         update_time = DateTime.now.strftime('%s')
-        updatable_passes_payload = {:lastUpdated => update_time}
-        updatable_passes_payload[:serialNumbers] = registered_passes.collect{|rp| rp[:serial_number]}
-        
+        updatable_passes_payload = { :lastUpdated => update_time }
+        updatable_passes_payload[:serialNumbers] = registered_passes.collect { |rp| rp[:serial_number] }
         updatable_passes_payload.to_json
-        
+
       else
         puts '[ ok ] No passes found that could be updated for this device.'
         status 204
-
       end
       
     else
@@ -153,6 +127,7 @@ class PassServer < Sinatra::Base
     end
   end
   
+
   # Unregister
   #
   # unregister a device to receive push notifications for a pass
@@ -164,16 +139,17 @@ class PassServer < Sinatra::Base
   # server response:
   # --> if disassociation succeeded: 200
   # --> if not authorized: 401
+  #
   delete "/v1/devices/:device_id/registrations/:pass_type_id/:serial_number" do 
-    puts "Handling unregistration request..."
-    if self.passes.where(:serial_number => params[:serial_number], :authentication_token => authentication_token).first
+    puts "#<UnregistrationRequest device_id: #{params[:device_id]}, pass_type_id: #{params[:pass_type_id]}, serial_number: #{params[:serial_number]}, authentication_token: #{authentication_token}>"
+    if is_auth_token_valid?(params[:serial_number], params[:pass_type_id], authentication_token)
       puts '[ ok ] Pass and authentication token match.'
       
       # Validate that the device has previously registered
       # Note: this is done with a composite key that is combination of the device_id and the pass serial_number
-      uuid = params[:device_id] + "-" + params[:serial_number]
-      if self.registrations.where(:uuid => uuid).count > 0
-        self.registrations.where(:uuid => uuid).delete
+      if device_has_registration_for_serial_number?(params[:device_id], params[:serial_number])
+        puts '[ ok ] Deleting registration.'
+        delete_device_registration(params[:device_id], params[:serial_number])
         status 200
       else
         puts '[ fail ] Registration does not exist.'
@@ -185,7 +161,6 @@ class PassServer < Sinatra::Base
       puts '[ fail ] Not authorized.'
       status 401
     end
-    
   end
   
   
@@ -199,8 +174,8 @@ class PassServer < Sinatra::Base
   # --> if auth token is incorrect: 401
   #
   get '/v1/passes/:pass_type_id/:serial_number' do
-    puts "Handling pass delivery request..."
-    if self.passes.where(:serial_number => params[:serial_number]).where(:pass_type_id => params[:pass_type_id]).where(:authentication_token => authentication_token).first
+    puts "#<PassDeliveryRequest pass_type_id: #{params[:pass_type_id]}, serial_number: #{params[:serial_number]}, authentication_token: #{authentication_token}>"
+    if is_auth_token_valid?(params[:serial_number], params[:pass_type_id], authentication_token)
       puts '[ ok ] Pass and authentication token match.'
       
       # Load pass data from database
@@ -421,6 +396,83 @@ class PassServer < Sinatra::Base
 
   private
   
+  def add_pass_for_user(user_id)
+    serial_number = new_serial_number
+    auth_token = new_authentication_token
+    add_pass(serial_number, auth_token, "pass.com.codekollektiv.balance", user_id)
+  end
+
+  def add_pass(serial_number, authentication_token, pass_type_id, user_id)
+    now = DateTime.now
+    self.passes.insert(:serial_number => serial_number, :authentication_token => authentication_token, :pass_type_id => pass_type_id, :user_id => user_id, :created_at => now, :updated_at => now)
+    puts "<#Pass serial_number: #{serial_number} authentication_token: #{authentication_token} pass_type_id: #{pass_type_id} user_id: #{user_id}>"
+  end
+
+  def add_device_registration(device_id, push_token, pass_type_identifier, serial_number)
+    uuid = registration_uuid_for_device(device_id, serial_number)
+    self.registrations.insert(:uuid => uuid, :device_id => device_id, :pass_type_id => pass_type_identifier, :push_token => push_token, :serial_number => serial_number)
+  end
+
+  def delete_device_registration(device_id, serial_number)
+    uuid = registration_uuid_for_device(device_id, serial_number)
+    self.registrations.where(:uuid => uuid).delete
+  end
+
+  # Validate that the request is authorized to deal with the pass referenced
+  def is_auth_token_valid?(serial_number, pass_type_identifier, auth_token)
+    pass = self.passes.where(:serial_number => serial_number, :pass_type_id => pass_type_identifier, :authentication_token => auth_token).first
+    if pass
+      return true
+    else
+      return false
+    end
+  end
+
+  # Check if a device is already registered
+  def device_has_any_registrations?(device_id)
+    registration_count = self.registrations.where(:device_id => device_id).count
+    if registration_count > 0
+      return true
+    else
+      return false
+    end
+  end
+
+  def device_has_registration_for_serial_number?(device_id, serial_number)
+    uuid = registration_uuid_for_device(device_id, serial_number)
+    if self.registrations.where(:uuid => uuid).count > 0
+      return true
+    else
+      return false
+    end
+  end
+
+  def registration_uuid_for_device(device_id, serial_number)
+    # Note: UUID is a composite key that is combination of the device_id and the pass serial_number
+    raise "device_id must not be nil" if device_id.nil?
+    raise "serial_number must not be nil" if serial_number.nil?
+    return device_id + "-" + serial_number
+  end
+
+  def registered_passes_for_device(device_id, pass_type_identifier, updated_since)
+    registered_serial_numbers = self.registrations.where(:device_id => device_id, :pass_type_id => pass_type_identifier).collect { |r| r[:serial_number] }
+    
+    if updated_since
+      registered_passes = self.passes.where(:serial_number => registered_serial_numbers).filter('updated_at IS NULL OR updated_at >= ?', updated_since)
+    else
+      registered_passes = self.passes.where(:serial_number => registered_serial_numbers)
+    end
+    return registered_passes
+  end
+
+  def new_serial_number
+    return SecureRandom.hex
+  end
+
+  def new_authentication_token
+    return SecureRandom.hex
+  end
+
   def get_certificate_path
     certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
     certs = Dir.glob("#{certDirectory}/*.p12")
@@ -451,18 +503,3 @@ class PassServer < Sinatra::Base
     end
   end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
