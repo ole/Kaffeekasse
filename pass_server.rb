@@ -137,13 +137,15 @@ class PassServer < Sinatra::Base
     puts "#<RegistrationRequest device_id: #{params[:device_id]}, pass_type_id: #{params[:pass_type_id]}, serial_number: #{params[:serial_number]}, authentication_token: #{authentication_token}, push_token: #{push_token}>"
     if @passes.where(:serial_number => params[:serial_number]).where(:authentication_token => authentication_token).first
       
-      puts 'Pass and authentication token match.'
+      puts '[ ok ] Pass and authentication token match.'
       
       # Validate that the device has not previously registered
       # Note: this is done with a composite key that is combination of the device_id and the pass serial_number
       uuid = params[:device_id] + "-" + params[:serial_number]
       if @registrations.where(:uuid => uuid).count < 1
         
+        puts '[ ok ] New registration, creating.'
+
         # No registration found, lets add the device
         @registrations.insert(:uuid => uuid, :device_id => params[:device_id], :pass_type_id => params[:pass_type_id], :push_token => push_token, :serial_number => params[:serial_number])
         
@@ -152,12 +154,14 @@ class PassServer < Sinatra::Base
       else
         # The device has already registered for updates on this pass
         # Acknowledge the request with a 200 OK response
+        puts '[ ok ] Device is already registered.'
         status 200
       end
       
     else
       # The device did not statisfy the authentication requirements
       # Return a 401 NOT AUTHORIZED response
+      puts '[ fail ] Registration request is not authorized.'
       status 401
     end
 
@@ -185,13 +189,15 @@ class PassServer < Sinatra::Base
     if @registrations.where(:device_id => params[:device_id]).count > 0
       
       # The device is registered with the service
+      puts '[ ok ] Device registration found.'
       
       # Find the registrations for the device
       registered_serial_numbers = @registrations.where(:device_id => params[:device_id], :pass_type_id => params[:pass_type_id]).collect{|r| r[:serial_number]}
       
       # The passesUpdatedSince param is optional for scoping the update query
       if params[:passesUpdatedSince] && params[:passesUpdatedSince] != ""
-        registered_passes = @passes.where(:serial_number => registered_serial_numbers).filter('updated_at IS NULL OR updated_at >= ?', params[:passesUpdatedSince])
+        updated_since = DateTime.strptime(params[:passesUpdatedSince], '%s')
+        registered_passes = @passes.where(:serial_number => registered_serial_numbers).filter('updated_at IS NULL OR updated_at >= ?', updated_since)
       else
         registered_passes = @passes.where(:serial_number => registered_serial_numbers)
       end
@@ -199,25 +205,26 @@ class PassServer < Sinatra::Base
       # Are there passes that this device should recieve updates for?
       if registered_passes.count > 0
         # Found passes that could be updated for this device
+        puts '[ ok ] Found passes that could be updated for this device.'
         
         # Build the response object
-        update_time = lambda{Time.now}.call
+        update_time = DateTime.now.strftime('%s')
         updatable_passes_payload = {:lastUpdated => update_time}
         updatable_passes_payload[:serialNumbers] = registered_passes.collect{|rp| rp[:serial_number]}
         
         updatable_passes_payload.to_json
         
       else
+        puts '[ ok ] No passes found that could be updated for this device.'
         status 204
 
       end
       
     else
       # This device is not currently registered with the service
+      puts '[ fail ] Device is not registered.'
       status 404
     end
-    
-    
   end
   
   # Unregister
@@ -234,7 +241,7 @@ class PassServer < Sinatra::Base
   delete "/v1/devices/:device_id/registrations/:pass_type_id/:serial_number" do 
     puts "Handling unregistration request..."
     if @passes.where(:serial_number => params[:serial_number], :authentication_token => authentication_token).first
-      puts 'Pass and authentication token match.'
+      puts '[ ok ] Pass and authentication token match.'
       
       # Validate that the device has previously registered
       # Note: this is done with a composite key that is combination of the device_id and the pass serial_number
@@ -243,12 +250,13 @@ class PassServer < Sinatra::Base
         @registrations.where(:uuid => uuid).delete
         status 200
       else
-        puts 'Registration does not exist.'
+        puts '[ fail ] Registration does not exist.'
         status 401
       end
     
     else
       # Not authorized
+      puts '[ fail ] Not authorized.'
       status 401
     end
     
@@ -267,39 +275,47 @@ class PassServer < Sinatra::Base
   get '/v1/passes/:pass_type_id/:serial_number' do
     puts "Handling pass delivery request..."
     if @passes.where(:serial_number => params[:serial_number]).where(:pass_type_id => params[:pass_type_id]).where(:authentication_token => authentication_token).first
-      puts 'Pass and authentication token match.'
+      puts '[ ok ] Pass and authentication token match.'
       
-      # Read in the pass json
-      json_file_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes/#{params[:serial_number]}/pass.json"
-      pass_json = JSON.parse(File.read(json_file_path))
+      # Load pass data from database
+      pass = @db[:passes].where[:serial_number => params[:serial_number]]
+      user = @db[:users].where[:id => pass[:user_id]]
+      pass_id = pass[:id]
 
-      old_gate_number = pass_json["boardingPass"]["headerFields"].select{|i| i["key"] == "gate"}.first["value"].to_i
+      passes_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes"
+      template_folder_path = passes_folder_path + "/template"
+      target_folder_path = passes_folder_path + "/#{pass_id}"
       
-      # Update the gate information
-      if RUBY_VERSION == "1.8.7"
-        gate_number = (1..98).to_a.choice
-      else
-        gate_number = (1..98).to_a.sample
+      # Delete pass folder if it already exists
+      if (Dir.exists?(target_folder_path))
+        puts "Deleting existing pass data"
+        FileUtils.remove_dir(target_folder_path)
       end
-      
-      # Checks to make sure the new gate number choosen is different from the old gate
-      if old_gate_number == gate_number
-        gate_number.to_i += 1
-      end
-      
-      pass_json["boardingPass"]["headerFields"].select{|i| i["key"] == "gate"}.first["value"] = gate_number.to_s
-      
-      puts "\n\nGate changed to #{gate_number}.\n\n"
-      
+
+      # Copy pass files from template folder
+      puts "Creating pass data from template"
+      FileUtils.cp_r template_folder_path + "/.", target_folder_path
+
+      # Modify the pass json
+      puts "Updating pass data"
+      json_file_path = target_folder_path + "/pass.json"
+      pass_json = JSON.parse(File.read(json_file_path))
+      pass_json["passTypeIdentifier"] = self.pass_type_identifier
+      pass_json["serialNumber"] = pass[:serial_number]
+      pass_json["authenticationToken"] = pass[:authentication_token]
+      pass_json["webServiceURL"] = "http://#{self.hostname}:#{self.port}/"
+      pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
+      pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
+
       # Write out the updated JSON
       File.open(json_file_path, "w") do |f|
         f.write JSON.pretty_generate(pass_json)
       end
-      
+
       # Prepare for pass signing
-      pass_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes/#{params[:serial_number]}"
+      pass_folder_path = target_folder_path
       pass_signing_certificate_path = get_certificate_path
-      pass_output_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes/#{params[:serial_number]}.pkpass"
+      pass_output_path = passes_folder_path + "/#{pass_id}.pkpass"
       
       # Remove the old pass if it exists
       if File.exists?(pass_output_path)
@@ -310,10 +326,11 @@ class PassServer < Sinatra::Base
       pass_signer = SignPass.new(pass_folder_path, pass_signing_certificate_path, settings.certificate_password, pass_output_path)
       pass_signer.sign_pass!
       
-      
       # Send the pass file
+      puts '[ ok ] Sending pass file.'
       send_file(pass_output_path, :type => :pkpass)
     else
+      puts '[ fail ] Not authorized.'
       status 401
     end
   end
