@@ -53,11 +53,11 @@ class ReferenceServerSetup
     certDirectory = File.dirname(File.expand_path(__FILE__)) + "/../Data/Certificate"
     certs = Dir.glob("#{certDirectory}/*.p12")
     if  certs.count ==0
-	puts "Couldn't find a certificate at #{certDirectory}"
-        puts "Exiting"
-        Process.exit
+      puts "Couldn't find a certificate at #{certDirectory}"
+      puts "Exiting"
+      Process.exit
     else
-        certificate_path = certs[0]
+      certificate_path = certs[0]
     end
   end
   
