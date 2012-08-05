@@ -361,6 +361,9 @@ class PassServer < Sinatra::Base
 
   post "/users" do
     @users = @db[:users]
+    now = DateTime.now
+    params[:user][:created_at] = now
+    params[:user][:updated_at] = now
     new_user_id = @users.insert(params[:user])
     add_pass_for_user(new_user_id)
     redirect "/users"
@@ -377,8 +380,15 @@ class PassServer < Sinatra::Base
   end
 
   put "/users/:user_id" do
-    @user = @db[:users].where(:id => params[:user_id])
-    @user.update(params[:user])
+    user = @db[:users].where(:id => params[:user_id])
+    now = DateTime.now
+    params[:user][:updated_at] = now
+    user.update(params[:user])
+
+    # Also update updated_at field of user's pass
+    pass = @db[:passes].where(:user_id => params[:user_id])
+    pass.update(:updated_at => now)
+
     redirect "/users"
   end
 
