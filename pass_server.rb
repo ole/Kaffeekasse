@@ -272,7 +272,7 @@ class PassServer < Sinatra::Base
     now = DateTime.now
     p[:created_at] = now
     p[:updated_at] = now
-    self.users.insert(p)
+    new_user_id = self.users.insert(p)
 
     # Also create a pass for the new user
     add_pass_for_user(new_user_id)
@@ -306,7 +306,6 @@ class PassServer < Sinatra::Base
   def add_pass(serial_number, authentication_token, pass_type_id, user_id)
     now = DateTime.now
     self.passes.insert(:serial_number => serial_number, :authentication_token => authentication_token, :pass_type_id => pass_type_id, :user_id => user_id, :created_at => now, :updated_at => now)
-    puts "<#Pass serial_number: #{serial_number} authentication_token: #{authentication_token} pass_type_id: #{pass_type_id} user_id: #{user_id}>"
   end
 
   def add_device_registration(device_id, push_token, pass_type_identifier, serial_number)
