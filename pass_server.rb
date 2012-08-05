@@ -498,7 +498,7 @@ class PassServer < Sinatra::Base
   private
   
   def get_certificate_path
-    certDirectory = File.dirname(File.expand_path(__FILE__)) + "/Data/Certificate"
+    certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
     certs = Dir.glob("#{certDirectory}/*.p12")
     if  certs.count ==0
 	puts "Couldn't find a certificate at #{certDirectory}"
@@ -509,14 +509,14 @@ class PassServer < Sinatra::Base
     end
   end
 
-  # Convienience method for parsing the authorization token header
+  # Convenience method for parsing the authorization token header
   def authentication_token
     if env && env['HTTP_AUTHORIZATION']
       env['HTTP_AUTHORIZATION'].split(" ").last
     end
   end
   
-  # Convienience method for parsing the pushToken out of a JSON POST body
+  # Convenience method for parsing the pushToken out of a JSON POST body
   def push_token
     if request && request.body
       request.body.rewind
