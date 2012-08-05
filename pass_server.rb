@@ -55,6 +55,8 @@ require 'securerandom'
 require File.dirname(File.expand_path(__FILE__)) + '/lib/apns.rb'
 
 class PassServer < Sinatra::Base
+  attr_accessor :db, :users, :passes, :registrations
+
   configure do
     mime_type :pkpass, 'application/vnd.apple.pkpass'
   end
@@ -73,9 +75,10 @@ class PassServer < Sinatra::Base
 
   before do
     # Load in the pass data before each request
-    @db = Sequel.sqlite("data/pass_server.sqlite3")
-    @passes ||= @db[:passes]
-    @registrations ||= @db[:registrations]
+    self.db ||= Sequel.sqlite("data/pass_server.sqlite3")
+    self.users ||= self.db[:users]
+    self.passes ||= self.db[:passes]
+    self.registrations ||= self.db[:registrations]
   end
   
 
@@ -86,9 +89,8 @@ class PassServer < Sinatra::Base
   end
 
   def add_pass(serial_number, authentication_token, pass_type_id, user_id)
-    passes = @db[:passes]
     now = DateTime.now
-    passes.insert(:serial_number => serial_number, :authentication_token => authentication_token, :pass_type_id => pass_type_id, :user_id => user_id, :created_at => now, :updated_at => now)
+    self.passes.insert(:serial_number => serial_number, :authentication_token => authentication_token, :pass_type_id => pass_type_id, :user_id => user_id, :created_at => now, :updated_at => now)
     puts "<#Pass serial_number: #{serial_number} authentication_token: #{authentication_token} pass_type_id: #{pass_type_id} user_id: #{user_id}>"
   end
 
@@ -117,19 +119,19 @@ class PassServer < Sinatra::Base
     puts "Handling registration request..."
     # validate that the request is authorized to deal with the pass referenced
     puts "#<RegistrationRequest device_id: #{params[:device_id]}, pass_type_id: #{params[:pass_type_id]}, serial_number: #{params[:serial_number]}, authentication_token: #{authentication_token}, push_token: #{push_token}>"
-    if @passes.where(:serial_number => params[:serial_number]).where(:authentication_token => authentication_token).first
+    if self.passes.where(:serial_number => params[:serial_number]).where(:authentication_token => authentication_token).first
       
       puts '[ ok ] Pass and authentication token match.'
       
       # Validate that the device has not previously registered
       # Note: this is done with a composite key that is combination of the device_id and the pass serial_number
       uuid = params[:device_id] + "-" + params[:serial_number]
-      if @registrations.where(:uuid => uuid).count < 1
+      if self.registrations.where(:uuid => uuid).count < 1
         
         puts '[ ok ] New registration, creating.'
 
         # No registration found, lets add the device
-        @registrations.insert(:uuid => uuid, :device_id => params[:device_id], :pass_type_id => params[:pass_type_id], :push_token => push_token, :serial_number => params[:serial_number])
+        self.registrations.insert(:uuid => uuid, :device_id => params[:device_id], :pass_type_id => params[:pass_type_id], :push_token => push_token, :serial_number => params[:serial_number])
         
         # Return a 201 CREATED status
         status 201
@@ -168,20 +170,20 @@ class PassServer < Sinatra::Base
   get '/v1/devices/:device_id/registrations/:pass_type_id?' do
     puts "Handling updates request..."
     # Check first that the device has registered with the service
-    if @registrations.where(:device_id => params[:device_id]).count > 0
+    if self.registrations.where(:device_id => params[:device_id]).count > 0
       
       # The device is registered with the service
       puts '[ ok ] Device registration found.'
       
       # Find the registrations for the device
-      registered_serial_numbers = @registrations.where(:device_id => params[:device_id], :pass_type_id => params[:pass_type_id]).collect{|r| r[:serial_number]}
+      registered_serial_numbers = self.registrations.where(:device_id => params[:device_id], :pass_type_id => params[:pass_type_id]).collect{|r| r[:serial_number]}
       
       # The passesUpdatedSince param is optional for scoping the update query
       if params[:passesUpdatedSince] && params[:passesUpdatedSince] != ""
         updated_since = DateTime.strptime(params[:passesUpdatedSince], '%s')
-        registered_passes = @passes.where(:serial_number => registered_serial_numbers).filter('updated_at IS NULL OR updated_at >= ?', updated_since)
+        registered_passes = self.passes.where(:serial_number => registered_serial_numbers).filter('updated_at IS NULL OR updated_at >= ?', updated_since)
       else
-        registered_passes = @passes.where(:serial_number => registered_serial_numbers)
+        registered_passes = self.passes.where(:serial_number => registered_serial_numbers)
       end
       
       # Are there passes that this device should recieve updates for?
@@ -222,14 +224,14 @@ class PassServer < Sinatra::Base
   # --> if not authorized: 401
   delete "/v1/devices/:device_id/registrations/:pass_type_id/:serial_number" do 
     puts "Handling unregistration request..."
-    if @passes.where(:serial_number => params[:serial_number], :authentication_token => authentication_token).first
+    if self.passes.where(:serial_number => params[:serial_number], :authentication_token => authentication_token).first
       puts '[ ok ] Pass and authentication token match.'
       
       # Validate that the device has previously registered
       # Note: this is done with a composite key that is combination of the device_id and the pass serial_number
       uuid = params[:device_id] + "-" + params[:serial_number]
-      if @registrations.where(:uuid => uuid).count > 0
-        @registrations.where(:uuid => uuid).delete
+      if self.registrations.where(:uuid => uuid).count > 0
+        self.registrations.where(:uuid => uuid).delete
         status 200
       else
         puts '[ fail ] Registration does not exist.'
@@ -256,12 +258,12 @@ class PassServer < Sinatra::Base
   #
   get '/v1/passes/:pass_type_id/:serial_number' do
     puts "Handling pass delivery request..."
-    if @passes.where(:serial_number => params[:serial_number]).where(:pass_type_id => params[:pass_type_id]).where(:authentication_token => authentication_token).first
+    if self.passes.where(:serial_number => params[:serial_number]).where(:pass_type_id => params[:pass_type_id]).where(:authentication_token => authentication_token).first
       puts '[ ok ] Pass and authentication token match.'
       
       # Load pass data from database
-      pass = @db[:passes].where[:serial_number => params[:serial_number]]
-      user = @db[:users].where[:id => pass[:user_id]]
+      pass = self.passes.where[:serial_number => params[:serial_number]]
+      user = self.users.where[:id => pass[:user_id]]
       pass_id = pass[:id]
 
       passes_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes"
@@ -324,8 +326,8 @@ class PassServer < Sinatra::Base
     puts "Opening connection to APNS."
 
     # Get the list of registered devices and send a push notification
-    pass = @db[:passes].where(:id => pass_id).first
-    push_tokens = @db[:registrations].where(:serial_number => pass[:serial_number]).collect{|r| r[:push_token]}.uniq
+    pass = self.passes.where(:id => pass_id).first
+    push_tokens = self.registrations.where(:serial_number => pass[:serial_number]).collect{|r| r[:push_token]}.uniq
     push_tokens.each do |push_token|
       puts "Sending a notification to #{push_token}"
       APNS.instance.deliver(push_token, "{}")
@@ -367,8 +369,8 @@ class PassServer < Sinatra::Base
   #
   
   get "/users" do
-    @users = @db[:users].order(:name).all
-    erb :'users/index'
+    ordered_users = self.users.order(:name).all
+    erb :'users/index', :locals => { :users => ordered_users }
   end
 
   get "/users/new" do
@@ -376,33 +378,32 @@ class PassServer < Sinatra::Base
   end
 
   post "/users" do
-    @users = @db[:users]
     now = DateTime.now
     params[:user][:created_at] = now
     params[:user][:updated_at] = now
-    new_user_id = @users.insert(params[:user])
+    new_user_id = self.users.insert(params[:user])
     add_pass_for_user(new_user_id)
     redirect "/users"
   end
 
   get "/users/:user_id" do
-    @user = @db[:users].where(:id => params[:user_id]).first
-    erb :'users/show'
+    user = self.users.where(:id => params[:user_id]).first
+    erb :'users/show', :locals => { :user => user }
   end
   
   get "/users/:user_id/edit" do
-    @user = @db[:users].where(:id => params[:user_id]).first
-    erb :'users/edit'
+    user = self.users.where(:id => params[:user_id]).first
+    erb :'users/edit', :locals => { :user => user }
   end
 
   put "/users/:user_id" do
-    user = @db[:users].where(:id => params[:user_id])
+    user = self.users.where(:id => params[:user_id])
     now = DateTime.now
     params[:user][:updated_at] = now
     user.update(params[:user])
 
     # Also update updated_at field of user's pass
-    pass = @db[:passes].where(:user_id => params[:user_id])
+    pass = self.passes.where(:user_id => params[:user_id])
     pass.update(:updated_at => now)
 
     # Send push notification
@@ -412,14 +413,14 @@ class PassServer < Sinatra::Base
   end
 
   delete "/users/:user_id" do
-    @db[:users].where(:id => params[:user_id]).delete
+    self.users.where(:id => params[:user_id]).delete
     redirect "/users"
   end
 
   get "/users/:user_id/pass.pkpass" do
     # Load pass data from database
-    user = @db[:users].where[:id => params[:user_id]]
-    pass = @db[:passes].where[:user_id => user[:id]]
+    user = self.users.where[:id => params[:user_id]]
+    pass = self.passes.where[:user_id => user[:id]]
     pass_id = pass[:id]
 
     passes_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes"
