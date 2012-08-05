@@ -163,7 +163,7 @@ class PassServer < Sinatra::Base
     end
   end
   
-  
+
   # Pass delivery
   #
   # GET /v1/passes/<typeID>/<serial#>
@@ -177,82 +177,13 @@ class PassServer < Sinatra::Base
     puts "#<PassDeliveryRequest pass_type_id: #{params[:pass_type_id]}, serial_number: #{params[:serial_number]}, authentication_token: #{authentication_token}>"
     if is_auth_token_valid?(params[:serial_number], params[:pass_type_id], authentication_token)
       puts '[ ok ] Pass and authentication token match.'
-      
-      # Load pass data from database
-      pass = self.passes.where[:serial_number => params[:serial_number]]
-      user = self.users.where[:id => pass[:user_id]]
-      pass_id = pass[:id]
-
-      passes_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes"
-      template_folder_path = passes_folder_path + "/template"
-      target_folder_path = passes_folder_path + "/#{pass_id}"
-      
-      # Delete pass folder if it already exists
-      if (Dir.exists?(target_folder_path))
-        puts "Deleting existing pass data"
-        FileUtils.remove_dir(target_folder_path)
-      end
-
-      # Copy pass files from template folder
-      puts "Creating pass data from template"
-      FileUtils.cp_r template_folder_path + "/.", target_folder_path
-
-      # Modify the pass json
-      puts "Updating pass data"
-      json_file_path = target_folder_path + "/pass.json"
-      pass_json = JSON.parse(File.read(json_file_path))
-      pass_json["passTypeIdentifier"] = settings.pass_type_identifier
-      pass_json["serialNumber"] = pass[:serial_number]
-      pass_json["authenticationToken"] = pass[:authentication_token]
-      pass_json["webServiceURL"] = "http://#{settings.hostname}:#{settings.port}/"
-      pass_json["barcode"]["message"] = pass[:serial_number]
-      pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
-      pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
-
-      # Write out the updated JSON
-      File.open(json_file_path, "w") do |f|
-        f.write JSON.pretty_generate(pass_json)
-      end
-
-      # Prepare for pass signing
-      pass_folder_path = target_folder_path
-      pass_signing_certificate_path = get_certificate_path
-      pass_output_path = passes_folder_path + "/#{pass_id}.pkpass"
-      
-      # Remove the old pass if it exists
-      if File.exists?(pass_output_path)
-        File.delete(pass_output_path)
-      end
-      
-      # Generate and sign the new pass
-      pass_signer = SignPass.new(pass_folder_path, pass_signing_certificate_path, settings.certificate_password, pass_output_path)
-      pass_signer.sign_pass!
-      
-      # Send the pass file
-      puts '[ ok ] Sending pass file.'
-      send_file(pass_output_path, :type => :pkpass)
+      deliver_pass(params[:serial_number], params[:pass_type_id])
     else
       puts '[ fail ] Not authorized.'
       status 401
     end
   end
   
-  
-  def push_update_for_pass(pass_id)
-    APNS.instance.open_connection("production")
-    puts "Opening connection to APNS."
-
-    # Get the list of registered devices and send a push notification
-    pass = self.passes.where(:id => pass_id).first
-    push_tokens = self.registrations.where(:serial_number => pass[:serial_number]).collect{|r| r[:push_token]}.uniq
-    push_tokens.each do |push_token|
-      puts "Sending a notification to #{push_token}"
-      APNS.instance.deliver(push_token, "{}")
-    end
-
-    APNS.instance.close_connection
-    puts "APNS connection closed."
-  end
 
   # Logging/Debugging from the device
   #
@@ -271,9 +202,7 @@ class PassServer < Sinatra::Base
       end
     end
     status 200
-      
   end
-  
   
   
   ################
@@ -335,58 +264,7 @@ class PassServer < Sinatra::Base
   end
 
   get "/users/:user_id/pass.pkpass" do
-    # Load pass data from database
-    user = self.users.where[:id => params[:user_id]]
-    pass = self.passes.where[:user_id => user[:id]]
-    pass_id = pass[:id]
-
-    passes_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes"
-    template_folder_path = passes_folder_path + "/template"
-    target_folder_path = passes_folder_path + "/#{pass_id}"
-    
-    # Delete pass folder if it already exists
-    if (Dir.exists?(target_folder_path))
-      puts "Deleting existing pass data"
-      FileUtils.remove_dir(target_folder_path)
-    end
-
-    # Copy pass files from template folder
-    puts "Creating pass data from template"
-    FileUtils.cp_r template_folder_path + "/.", target_folder_path
-
-    # Modify the pass json
-    puts "Updating pass data"
-    json_file_path = target_folder_path + "/pass.json"
-    pass_json = JSON.parse(File.read(json_file_path))
-    pass_json["passTypeIdentifier"] = settings.pass_type_identifier
-    pass_json["serialNumber"] = pass[:serial_number]
-    pass_json["authenticationToken"] = pass[:authentication_token]
-    pass_json["webServiceURL"] = "http://#{settings.hostname}:#{settings.port}/"
-    pass_json["barcode"]["message"] = pass[:serial_number]
-    pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
-    pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
-
-    # Write out the updated JSON
-    File.open(json_file_path, "w") do |f|
-      f.write JSON.pretty_generate(pass_json)
-    end
-
-    # Prepare for pass signing
-    pass_folder_path = target_folder_path
-    pass_signing_certificate_path = get_certificate_path
-    pass_output_path = passes_folder_path + "/#{pass_id}.pkpass"
-    
-    # Remove the old pass if it exists
-    if File.exists?(pass_output_path)
-      File.delete(pass_output_path)
-    end
-    
-    # Generate and sign the new pass
-    pass_signer = SignPass.new(pass_folder_path, pass_signing_certificate_path, settings.certificate_password, pass_output_path)
-    pass_signer.sign_pass!
-    
-    # Send the pass file
-    send_file(pass_output_path, :type => :pkpass)
+    deliver_pass_for_user(params[:user_id])
   end
   
   ###
@@ -463,6 +341,86 @@ class PassServer < Sinatra::Base
       registered_passes = self.passes.where(:serial_number => registered_serial_numbers)
     end
     return registered_passes
+  end
+
+  def deliver_pass_for_user(user_id)
+    user = self.users.where(:id => params[:user_id]).first
+    pass = self.passes.where(:user_id => user[:id]).first
+    deliver_pass(pass[:serial_number], pass[:pass_type_id])
+  end
+
+  def deliver_pass(serial_number, pass_type_identifier)
+    # Load pass data from database
+    pass = self.passes.where(:serial_number => serial_number, :pass_type_id => pass_type_identifier).first
+    pass_id = pass[:id]
+    user_id = pass[:user_id]
+    user = self.users.where(:id => user_id).first
+
+    # Configure folder paths
+    passes_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes"
+    template_folder_path = passes_folder_path + "/template"
+    target_folder_path = passes_folder_path + "/#{pass_id}"
+    
+    # Delete pass folder if it already exists
+    if (Dir.exists?(target_folder_path))
+      puts "[ ok ] Deleting existing pass data."
+      FileUtils.remove_dir(target_folder_path)
+    end
+
+    # Copy pass files from template folder
+    puts "[ ok ] Creating pass data from template."
+    FileUtils.cp_r template_folder_path + "/.", target_folder_path
+
+    # Modify the pass json
+    puts "[ ok ] Updating pass data."
+    json_file_path = target_folder_path + "/pass.json"
+    pass_json = JSON.parse(File.read(json_file_path))
+    pass_json["passTypeIdentifier"] = settings.pass_type_identifier
+    pass_json["serialNumber"] = pass[:serial_number]
+    pass_json["authenticationToken"] = pass[:authentication_token]
+    pass_json["webServiceURL"] = "http://#{settings.hostname}:#{settings.port}/"
+    pass_json["barcode"]["message"] = pass[:serial_number]
+    pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
+    pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
+
+    # Write out the updated JSON
+    File.open(json_file_path, "w") do |f|
+      f.write JSON.pretty_generate(pass_json)
+    end
+
+    # Prepare for pass signing
+    pass_folder_path = target_folder_path
+    pass_signing_certificate_path = get_certificate_path
+    pass_output_path = passes_folder_path + "/#{pass_id}.pkpass"
+    
+    # Remove the old pass if it exists
+    if File.exists?(pass_output_path)
+      File.delete(pass_output_path)
+    end
+    
+    # Generate and sign the new pass
+    pass_signer = SignPass.new(pass_folder_path, pass_signing_certificate_path, settings.certificate_password, pass_output_path)
+    pass_signer.sign_pass!
+    
+    # Send the pass file
+    puts '[ ok ] Sending pass file.'
+    send_file(pass_output_path, :type => :pkpass)
+  end
+
+  def push_update_for_pass(pass_id)
+    APNS.instance.open_connection("production")
+    puts "Opening connection to APNS."
+
+    # Get the list of registered devices and send a push notification
+    pass = self.passes.where(:id => pass_id).first
+    push_tokens = self.registrations.where(:serial_number => pass[:serial_number]).collect{|r| r[:push_token]}.uniq
+    push_tokens.each do |push_token|
+      puts "Sending a notification to #{push_token}"
+      APNS.instance.deliver(push_token, "{}")
+    end
+
+    APNS.instance.close_connection
+    puts "APNS connection closed."
   end
 
   def new_serial_number
