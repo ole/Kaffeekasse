@@ -213,7 +213,11 @@ class PassServer < Sinatra::Base
   # authentication/authorization controls and should only be used for development.
   # Please protect your user's data.
   #
-  
+
+  get "/" do
+    erb :'index'
+  end
+
   get "/users" do
     ordered_users = self.users.order(:name).all
     erb :'users/index', :locals => { :users => ordered_users }
