@@ -52,6 +52,7 @@ require 'json'
 require 'socket'
 require 'sign_pass'
 require 'securerandom'
+require File.dirname(File.expand_path(__FILE__)) + '/lib/apns.rb'
 
 class PassServer < Sinatra::Base
   attr_accessor :certificate_password
@@ -336,6 +337,22 @@ class PassServer < Sinatra::Base
   end
   
   
+  def push_update_for_pass(pass_id)
+    APNS.instance.open_connection("production")
+    puts "Opening connection to APNS."
+
+    # Get the list of registered devices and send a push notification
+    pass = @db[:passes].where(:id => pass_id).first
+    push_tokens = @db[:registrations].where(:serial_number => pass[:serial_number]).collect{|r| r[:push_token]}.uniq
+    push_tokens.each do |push_token|
+      puts "Sending a notification to #{push_token}"
+      APNS.instance.deliver(push_token, "{}")
+    end
+
+    APNS.instance.close_connection
+    puts "APNS connection closed."
+  end
+
   # Logging/Debugging from the device
   #
   # log an error or unexpected server behavior, to help with server debugging
@@ -405,6 +422,9 @@ class PassServer < Sinatra::Base
     # Also update updated_at field of user's pass
     pass = @db[:passes].where(:user_id => params[:user_id])
     pass.update(:updated_at => now)
+
+    # Send push notification
+    push_update_for_pass(pass.first[:id])
 
     redirect "/users"
   end
