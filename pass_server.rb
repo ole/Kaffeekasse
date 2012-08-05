@@ -14,18 +14,6 @@ class PassServer < Sinatra::Base
   configure do
     mime_type :pkpass, 'application/vnd.apple.pkpass'
   end
-  
-  def get_certificate_path
-    certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
-    certs = Dir.glob("#{certDirectory}/*.p12")
-    if  certs.count ==0
-      puts "Couldn't find a certificate at #{certDirectory}"
-      puts "Exiting"
-      Process.exit
-    else
-      certificate_path = certs[0]
-    end
-  end
 
   before do
     # Load in the pass data before each request
@@ -437,11 +425,11 @@ class PassServer < Sinatra::Base
     certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
     certs = Dir.glob("#{certDirectory}/*.p12")
     if  certs.count ==0
-	puts "Couldn't find a certificate at #{certDirectory}"
-        puts "Exiting"
-        Process.exit
+    	puts "Couldn't find a certificate at #{certDirectory}"
+      puts "Exiting"
+      Process.exit
     else
-        certificate_path = certs[0]
+      certificate_path = certs[0]
     end
   end
 
