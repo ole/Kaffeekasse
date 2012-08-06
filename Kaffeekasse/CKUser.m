@@ -10,20 +10,35 @@
 
 @implementation CKUser
 
-+ (id)userWithName:(NSString *)name email:(NSString *)email accountBalance:(float)accountBalance
++ (id)userWithJSON:(NSDictionary *)jsonDictionary
 {
-    return [[self alloc] initWithName:name email:email accountBalance:accountBalance];
+    NSNumber *userID = jsonDictionary[@"id"];
+    NSString *name = jsonDictionary[@"name"];
+    NSString *email = jsonDictionary[@"email"];
+    float accountBalance = [jsonDictionary[@"account_balance"] floatValue];
+    return [self userWithID:userID name:name email:email accountBalance:accountBalance];
 }
 
-- (id)initWithName:(NSString *)name email:(NSString *)email accountBalance:(float)accountBalance
++ (id)userWithID:(NSNumber *)userID name:(NSString *)name email:(NSString *)email accountBalance:(float)accountBalance
+{
+    return [[self alloc] initWithID:userID name:name email:email accountBalance:accountBalance];
+}
+
+- (id)initWithID:(NSNumber *)userID name:(NSString *)name email:(NSString *)email accountBalance:(float)accountBalance
 {
     self = [super init];
     if (self) {
+        _userID = userID;
         _name = [name copy];
         _email = [email copy];
         _accountBalance = accountBalance;
     }
     return self;
+}
+
+- (id)copyWithZone:(NSZone *)zone
+{
+    return [[[self class] allocWithZone:zone] initWithID:self.userID name:self.name email:self.email accountBalance:self.accountBalance];
 }
 
 @end

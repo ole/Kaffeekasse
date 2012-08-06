@@ -58,14 +58,115 @@
                                     </subviews>
                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 </view>
+                                <connections>
+                                    <segue destination="Rm5-Kh-4gM" kind="push" identifier="EditUser" id="KOn-zU-ZXV"/>
+                                </connections>
                             </tableViewCell>
                         </prototypes>
                     </tableView>
-                    <navigationItem key="navigationItem" title="CodeKollektiv" id="L3D-tD-0Hi"/>
+                    <navigationItem key="navigationItem" title="Users" id="L3D-tD-0Hi"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ctG-fa-lXK" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-57" y="-146"/>
+        </scene>
+        <!--Edit User View Controller - Edit User-->
+        <scene sceneID="hUG-RQ-0Oa">
+            <objects>
+                <viewController title="Edit User" id="Rm5-Kh-4gM" customClass="EditUserViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="VbD-lb-BmQ">
+                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <textField translatesAutoresizingMaskIntoConstraints="NO" opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Name" minimumFontSize="17" clearButtonMode="whileEditing" text="John Appleseed" id="oVW-Ag-jmO">
+                                <textInputTraits key="textInputTraits" autocapitalizationType="words" autocorrectionType="no"/>
+                                <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <connections>
+                                    <action selector="handleTextFieldChanged:" destination="Rm5-Kh-4gM" eventType="valueChanged" id="8CF-LE-FxC"/>
+                                    <outlet property="delegate" destination="Rm5-Kh-4gM" id="Mej-dY-Ya1"/>
+                                </connections>
+                            </textField>
+                            <textField translatesAutoresizingMaskIntoConstraints="NO" opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="E-Mail" minimumFontSize="17" clearButtonMode="whileEditing" text="john.appleseed@apple.com" id="A4C-1m-SYB">
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" keyboardType="emailAddress"/>
+                                <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <connections>
+                                    <action selector="handleTextFieldChanged:" destination="Rm5-Kh-4gM" eventType="editingDidEnd" id="RDE-Cj-lbo"/>
+                                    <outlet property="delegate" destination="Rm5-Kh-4gM" id="ixt-3M-2Dq"/>
+                                </connections>
+                            </textField>
+                            <textField translatesAutoresizingMaskIntoConstraints="NO" opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="E-Mail" minimumFontSize="17" clearButtonMode="whileEditing" text="10.00" id="kUN-Ax-WM2">
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="78" id="kYV-8Q-mI2"/>
+                                </constraints>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" keyboardType="numberPad"/>
+                                <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <connections>
+                                    <action selector="handleTextFieldChanged:" destination="Rm5-Kh-4gM" eventType="editingDidEnd" id="lND-PO-6cb"/>
+                                    <outlet property="delegate" destination="Rm5-Kh-4gM" id="GWQ-s1-Mxy"/>
+                                </connections>
+                            </textField>
+                            <label translatesAutoresizingMaskIntoConstraints="NO" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" text="€" adjustsFontSizeToFit="NO" autoshrinkMode="none" id="6Fp-OL-Yv6">
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="24" id="huf-xl-Qal"/>
+                                    <constraint firstAttribute="width" constant="15" id="lI2-5e-Mpa"/>
+                                </constraints>
+                                <nil key="highlightedColor"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                            </label>
+                            <stepper translatesAutoresizingMaskIntoConstraints="NO" opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" maximumValue="100" id="Y7c-FU-5EE">
+                                <connections>
+                                    <action selector="handleAccountBalanceStepperChanged:" destination="Rm5-Kh-4gM" eventType="valueChanged" id="hJe-7h-XqA"/>
+                                </connections>
+                            </stepper>
+                            <button translatesAutoresizingMaskIntoConstraints="NO" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" hasAttributedTitle="NO" lineBreakMode="middleTruncation" id="U1a-6J-1oI">
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                <state key="normal" title="Save User">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="handleSaveButton:" destination="Rm5-Kh-4gM" eventType="touchUpInside" id="ZXH-rv-Oep"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="U1a-6J-1oI" firstAttribute="top" secondItem="VbD-lb-BmQ" secondAttribute="top" constant="145" id="5eD-xQ-acW"/>
+                            <constraint firstItem="6Fp-OL-Yv6" firstAttribute="leading" secondItem="kUN-Ax-WM2" secondAttribute="trailing" constant="8" symbolic="YES" type="default" id="Fs2-eS-UZy"/>
+                            <constraint firstItem="kUN-Ax-WM2" firstAttribute="bottom" secondItem="Y7c-FU-5EE" secondAttribute="bottom" type="default" id="JPf-f2-rW7"/>
+                            <constraint firstItem="A4C-1m-SYB" firstAttribute="top" secondItem="oVW-Ag-jmO" secondAttribute="bottom" constant="8" symbolic="YES" type="default" id="L2m-id-EBY"/>
+                            <constraint firstAttribute="trailing" secondItem="U1a-6J-1oI" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="OU3-BU-kAn"/>
+                            <constraint firstItem="Y7c-FU-5EE" firstAttribute="top" secondItem="6Fp-OL-Yv6" secondAttribute="top" type="default" id="R3U-Vj-Azz"/>
+                            <constraint firstItem="kUN-Ax-WM2" firstAttribute="leading" secondItem="VbD-lb-BmQ" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="T93-RN-q68"/>
+                            <constraint firstItem="oVW-Ag-jmO" firstAttribute="top" secondItem="VbD-lb-BmQ" secondAttribute="top" constant="20" symbolic="YES" type="default" id="Z8r-hA-p8N"/>
+                            <constraint firstItem="A4C-1m-SYB" firstAttribute="leading" secondItem="VbD-lb-BmQ" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="ear-AQ-sNl"/>
+                            <constraint firstItem="U1a-6J-1oI" firstAttribute="leading" secondItem="VbD-lb-BmQ" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="fop-08-2Rf"/>
+                            <constraint firstItem="kUN-Ax-WM2" firstAttribute="top" secondItem="A4C-1m-SYB" secondAttribute="bottom" constant="8" symbolic="YES" type="default" id="jEO-Qg-Ykd"/>
+                            <constraint firstAttribute="trailing" secondItem="oVW-Ag-jmO" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="jMy-bI-BL1"/>
+                            <constraint firstAttribute="trailing" secondItem="A4C-1m-SYB" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="nwL-Oh-kvh"/>
+                            <constraint firstAttribute="trailing" secondItem="Y7c-FU-5EE" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="ox6-Mz-fvO"/>
+                            <constraint firstItem="oVW-Ag-jmO" firstAttribute="leading" secondItem="VbD-lb-BmQ" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="vv4-hB-iyd"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" title="John Appleseed" id="nGn-dG-jgA"/>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
+                    <connections>
+                        <outlet property="accountBalanceStepper" destination="Y7c-FU-5EE" id="hCl-PR-eM5"/>
+                        <outlet property="userAccountBalanceTextField" destination="kUN-Ax-WM2" id="nNB-mF-ehF"/>
+                        <outlet property="userEmailTextField" destination="A4C-1m-SYB" id="ytl-ke-Ue9"/>
+                        <outlet property="userNameTextField" destination="oVW-Ag-jmO" id="TSF-31-nn0"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="JXg-bh-8wm" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="336" y="-144"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="vg7-mR-34e">
@@ -85,6 +186,18 @@
         </scene>
     </scenes>
     <classes>
+        <class className="EditUserViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/EditUserViewController.h"/>
+            <relationships>
+                <relationship kind="action" name="handleAccountBalanceStepperChanged:"/>
+                <relationship kind="action" name="handleSaveButton:"/>
+                <relationship kind="action" name="handleTextFieldChanged:" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="accountBalanceStepper" candidateClass="UIStepper"/>
+                <relationship kind="outlet" name="userAccountBalanceTextField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="userEmailTextField" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="userNameTextField" candidateClass="UITextField"/>
+            </relationships>
+        </class>
         <class className="NSLayoutConstraint" superclassName="NSObject">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/NSLayoutConstraint.h"/>
         </class>

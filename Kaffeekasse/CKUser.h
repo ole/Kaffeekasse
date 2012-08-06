@@ -8,11 +8,13 @@
 
 #import <Foundation/Foundation.h>
 
-@interface CKUser : NSObject
+@interface CKUser : NSObject <NSCopying>
 
-+ (id)userWithName:(NSString *)name email:(NSString *)email accountBalance:(float)accountBalance;
-- (id)initWithName:(NSString *)name email:(NSString *)email accountBalance:(float)accountBalance;
++ (id)userWithJSON:(NSDictionary *)jsonDictionary;
++ (id)userWithID:(NSNumber *)userID name:(NSString *)name email:(NSString *)email accountBalance:(float)accountBalance;
+- (id)initWithID:(NSNumber *)userID name:(NSString *)name email:(NSString *)email accountBalance:(float)accountBalance;
 
+@property (readonly) NSNumber *userID;
 @property (copy) NSString *name;
 @property (copy) NSString *email;
 @property float accountBalance;

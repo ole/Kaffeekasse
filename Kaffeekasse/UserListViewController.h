@@ -7,7 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "EditUserViewController.h"
+#import "CKUser.h"
 
-@interface UserListViewController : UITableViewController <ZBarReaderDelegate>
+@interface UserListViewController : UITableViewController <ZBarReaderDelegate, EditUserViewControllerDelegate>
 
 @end
