@@ -14,7 +14,7 @@
 		5DF6E48315CFBF7000EF2095 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DF6E48215CFBF7000EF2095 /* main.m */; };
 		5DF6E48715CFBF7000EF2095 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DF6E48615CFBF7000EF2095 /* AppDelegate.m */; };
 		5DF6E48A15CFBF7000EF2095 /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5DF6E48815CFBF7000EF2095 /* MainStoryboard.storyboard */; };
-		5DF6E48D15CFBF7000EF2095 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DF6E48C15CFBF7000EF2095 /* ViewController.m */; };
+		5DF6E48D15CFBF7000EF2095 /* UserListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DF6E48C15CFBF7000EF2095 /* UserListViewController.m */; };
 		5DF6E4B115CFBFD900EF2095 /* libzbar.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DF6E4AB15CFBFD900EF2095 /* libzbar.a */; };
 		5DF6E4B215CFBFDA00EF2095 /* zbar-back.png in Resources */ = {isa = PBXBuildFile; fileRef = 5DF6E4AD15CFBFD900EF2095 /* zbar-back.png */; };
 		5DF6E4B315CFBFDA00EF2095 /* zbar-help.html in Resources */ = {isa = PBXBuildFile; fileRef = 5DF6E4AE15CFBFD900EF2095 /* zbar-help.html */; };
@@ -39,8 +39,8 @@
 		5DF6E48515CFBF7000EF2095 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		5DF6E48615CFBF7000EF2095 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		5DF6E48915CFBF7000EF2095 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/MainStoryboard.storyboard; sourceTree = "<group>"; };
-		5DF6E48B15CFBF7000EF2095 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		5DF6E48C15CFBF7000EF2095 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		5DF6E48B15CFBF7000EF2095 /* UserListViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserListViewController.h; sourceTree = "<group>"; };
+		5DF6E48C15CFBF7000EF2095 /* UserListViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserListViewController.m; sourceTree = "<group>"; };
 		5DF6E49715CFBFD900EF2095 /* Decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Decoder.h; sourceTree = "<group>"; };
 		5DF6E49815CFBFD900EF2095 /* Exception.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Exception.h; sourceTree = "<group>"; };
 		5DF6E49915CFBFD900EF2095 /* Image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Image.h; sourceTree = "<group>"; };
@@ -131,8 +131,8 @@
 				5DF6E48515CFBF7000EF2095 /* AppDelegate.h */,
 				5DF6E48615CFBF7000EF2095 /* AppDelegate.m */,
 				5DF6E48815CFBF7000EF2095 /* MainStoryboard.storyboard */,
-				5DF6E48B15CFBF7000EF2095 /* ViewController.h */,
-				5DF6E48C15CFBF7000EF2095 /* ViewController.m */,
+				5DF6E48B15CFBF7000EF2095 /* UserListViewController.h */,
+				5DF6E48C15CFBF7000EF2095 /* UserListViewController.m */,
 				5DF6E49315CFBFD900EF2095 /* ZBarSDK */,
 				5DF6E47D15CFBF7000EF2095 /* Supporting Files */,
 			);
@@ -283,7 +283,7 @@
 			files = (
 				5DF6E48315CFBF7000EF2095 /* main.m in Sources */,
 				5DF6E48715CFBF7000EF2095 /* AppDelegate.m in Sources */,
-				5DF6E48D15CFBF7000EF2095 /* ViewController.m in Sources */,
+				5DF6E48D15CFBF7000EF2095 /* UserListViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,6 +405,7 @@
 				5DF6E49215CFBF7000EF2095 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
