@@ -13,6 +13,8 @@
 
 @property NSMutableArray *users;
 
+- (IBAction)handlePullToRefresh:(UIRefreshControl *)sender;
+
 @end
 
 
@@ -21,27 +23,21 @@
 - (void)awakeFromNib
 {
     self.users = [NSMutableArray array];
-    
-    CodeKollektivAPI *api = [[CodeKollektivAPI alloc] init];
-    [api loadUsers:^(BOOL success, id result, NSError *error) {
-        if (success) {
-            NSLog(@"%@", result);
-            [self.users removeAllObjects];
-            [self.users addObjectsFromArray:result];
-            [self.tableView reloadData];
-        } else {
-            NSLog(@"Error loading users: %@", error);
-        }
+    [self loadUsersWithCompletionHandler:^(BOOL success) {
+        [self.tableView reloadData];
     }];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    [self.refreshControl addTarget:self action:@selector(handlePullToRefresh:) forControlEvents:UIControlEventValueChanged];
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     if ([segue.identifier isEqualToString:@"EditUser"])
     {
-        EditUserViewController *editUserViewController = segue.destinationViewController;
-        editUserViewController.delegate = self;
-        
         CKUser *user = nil;
         if ([sender isKindOfClass:[CKUser class]]) {
             user = sender;
@@ -49,10 +45,38 @@
             NSIndexPath *indexPath = [self.tableView indexPathForCell:sender];
             user = self.users[indexPath.row];
         } else {
-            user = [CKUser userWithID:nil name:@"" email:@"" accountBalance:10.0f];
+            user = [CKUser userWithID:nil name:@"" email:@"" accountBalance:0.0f];
         }
+
+        EditUserViewController *editUserViewController = segue.destinationViewController;
+        editUserViewController.delegate = self;
         editUserViewController.user = [user copy];
     }
+}
+
+- (void)loadUsersWithCompletionHandler:(void (^)(BOOL success))completionHandler
+{
+    CodeKollektivAPI *api = [[CodeKollektivAPI alloc] init];
+    [api loadUsers:^(BOOL success, id result, NSError *error) {
+        if (success) {
+            NSLog(@"%@", result);
+            [self.users removeAllObjects];
+            [self.users addObjectsFromArray:result];
+        } else {
+            NSLog(@"Error loading users: %@", error);
+        }
+        if (completionHandler) {
+            completionHandler(success);
+        }
+    }];
+}
+
+- (IBAction)handlePullToRefresh:(UIRefreshControl *)sender
+{
+    [self loadUsersWithCompletionHandler:^(BOOL success) {
+        [self.tableView reloadData];
+        [sender endRefreshing];
+    }];
 }
 
 #pragma mark - Barcode scanner
@@ -99,12 +123,23 @@
 
 #pragma mark - EditUserViewControllerDelegate
 
-- (void)editUserViewController:(EditUserViewController *)controller didUpdateUser:(CKUser *)user
+- (void)editUserViewController:(EditUserViewController *)controller didUpdateUser:(CKUser *)updatedUser
 {
     CodeKollektivAPI *api = [[CodeKollektivAPI alloc] init];
-    [api updateUser:user completionHandler:^(BOOL success, NSError *error) {
+    [api updateUser:updatedUser completionHandler:^(BOOL success, NSError *error) {
         if (success) {
             NSLog(@"Updated user");
+            [self.navigationController popViewControllerAnimated:YES];
+            NSUInteger indexOfUpdatedUser = [self.users indexOfObjectPassingTest:^BOOL(id user, NSUInteger idx, BOOL *stop) {
+                if ([updatedUser.userID isEqualToNumber:[user userID]]) {
+                    return YES;
+                }
+                return NO;
+            }];
+            if (indexOfUpdatedUser != NSNotFound) {
+                [self.users replaceObjectAtIndex:indexOfUpdatedUser withObject:updatedUser];
+                [self.tableView reloadRowsAtIndexPaths:@[ [NSIndexPath indexPathForRow:indexOfUpdatedUser inSection:1] ] withRowAnimation:UITableViewRowAnimationAutomatic];
+            }
         } else {
             NSLog(@"Updating user failed: %@", error);
         }
@@ -146,8 +181,6 @@
     if (indexPath.section == 0) {
         [self presentBarcodeScanner];
     }
-    
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 @end

@@ -32,6 +32,7 @@
 
 - (void)updateUI
 {
+    self.navigationItem.title = self.user.name;
     self.userNameTextField.text = self.user.name;
     self.userEmailTextField.text = self.user.email;
     self.userAccountBalanceTextField.text = [NSString stringWithFormat:@"%.2f", self.user.accountBalance];

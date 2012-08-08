@@ -11,7 +11,7 @@
 
 @protocol EditUserViewControllerDelegate;
 
-@interface EditUserViewController : UIViewController <UITextFieldDelegate>
+@interface EditUserViewController : UITableViewController <UITextFieldDelegate>
 
 @property (weak) id<EditUserViewControllerDelegate> delegate;
 @property CKUser *user;
