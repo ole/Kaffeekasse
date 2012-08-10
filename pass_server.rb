@@ -218,9 +218,24 @@ class PassServer < Sinatra::Base
     erb :'index'
   end
 
+  get "/user_for_pass/:pass_type_id/:serial_number/:authentication_token" do
+    pass = self.passes.where(:pass_type_id => params[:pass_type_id], :serial_number => params[:serial_number], :authentication_token => params[:authentication_token]).first
+    if pass
+      user_id = pass[:user_id]
+      redirect "/users/#{user_id}"
+    else
+      status 404
+    end
+  end
+
   get "/users" do
     ordered_users = self.users.order(:name).all
-    erb :'users/index', :locals => { :users => ordered_users }
+    if request.accept.include? "application/json"
+      content_type 'application/json', :charset => 'utf-8'
+      ordered_users.to_json
+    else
+      erb :'users/index', :locals => { :users => ordered_users }
+    end
   end
 
   get "/users/new" do
@@ -234,7 +249,12 @@ class PassServer < Sinatra::Base
 
   get "/users/:user_id" do
     user = self.users.where(:id => params[:user_id]).first
-    erb :'users/show', :locals => { :user => user }
+    if request.accept.include? "application/json"
+      content_type 'application/json', :charset => 'utf-8'
+      user.to_json
+    else
+      erb :'users/show', :locals => { :user => user }
+    end
   end
   
   get "/users/:user_id/edit" do
@@ -244,7 +264,12 @@ class PassServer < Sinatra::Base
 
   put "/users/:user_id" do
     update_user_with_params(params[:user_id], params[:user])
-    redirect "/users"
+    if request.accept.include? "application/json"
+      content_type 'application/json', :charset => 'utf-8'
+      status 200
+    else
+      redirect "/users"
+    end
   end
 
   delete "/users/:user_id" do
@@ -401,7 +426,7 @@ class PassServer < Sinatra::Base
     pass_json["serialNumber"] = pass[:serial_number]
     pass_json["authenticationToken"] = pass[:authentication_token]
     pass_json["webServiceURL"] = "http://#{settings.hostname}:#{settings.port}/"
-    pass_json["barcode"]["message"] = pass[:serial_number]
+    pass_json["barcode"]["message"] = barcode_string_for_pass(pass)
     pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
     pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
 
@@ -443,6 +468,15 @@ class PassServer < Sinatra::Base
 
     APNS.instance.close_connection
     puts "APNS connection closed."
+  end
+
+  def barcode_string_for_pass(pass)
+    barcode_string = {
+      "pass_type_id" => pass[:pass_type_id],
+      "serial_number" => pass[:serial_number],
+      "authentication_token" => pass[:authentication_token]
+    }
+    barcode_string.to_json
   end
 
   def new_serial_number
