@@ -198,7 +198,7 @@ class PassServer < Sinatra::Base
       request.body.rewind
       json_body = JSON.parse(request.body.read)
       File.open(File.dirname(File.expand_path(__FILE__)) + "/log/devices.log", "a") do |f|
-        f.write "[#{Time.now}] #{json_body["description"]}\n"
+        f.write "[#{Time.now}] #{json_body}\n"
       end
     end
     status 200
