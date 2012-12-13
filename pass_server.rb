@@ -12,6 +12,7 @@ class PassServer < Sinatra::Base
   attr_accessor :db, :users, :passes, :registrations
 
   configure do
+    # Register MIME type for pass files
     mime_type :pkpass, 'application/vnd.apple.pkpass'
   end
 
@@ -22,7 +23,7 @@ class PassServer < Sinatra::Base
     self.passes ||= self.db[:passes]
     self.registrations ||= self.db[:registrations]
   end
-  
+
 
   # Registration
   # register a device to receive push notifications for a pass
@@ -71,9 +72,8 @@ class PassServer < Sinatra::Base
       puts '[ fail ] Registration request is not authorized.'
       status 401
     end
-
   end
-   
+
 
   # Updatable passes
   #
@@ -126,7 +126,7 @@ class PassServer < Sinatra::Base
       status 404
     end
   end
-  
+
 
   # Unregister
   #
@@ -207,41 +207,34 @@ class PassServer < Sinatra::Base
   
   ################
   # FOR DEVELOPMENT PURPOSES ONLY
-  # This endpoint is to allow developers to download a pass.
+  # These endpoints allow developers to create/edit users and download passes.
   # 
-  # NOTE: This endpoint is not part of the offical API and does not implement
-  # authentication/authorization controls and should only be used for development.
-  # Please protect your user's data.
+  # NOTE: These endpoints are not part of the offical passbook API and do not implement
+  # any authentication/authorization controls whatsoever.
+  # They should only be used for development purposes.
   #
 
+  # Display the home page
   get "/" do
-    erb :'index'
+    erb :'index.html'
   end
 
-  get "/user_for_pass/:pass_type_id/:serial_number/:authentication_token" do
-    pass = self.passes.where(:pass_type_id => params[:pass_type_id], :serial_number => params[:serial_number], :authentication_token => params[:authentication_token]).first
-    if pass
-      user_id = pass[:user_id]
-      redirect "/users/#{user_id}"
-    else
-      status 404
-    end
-  end
-
+  # List of users
   get "/users" do
     ordered_users = self.users.order(:name).all
     if request.accept.include? "application/json"
       content_type 'application/json', :charset => 'utf-8'
       ordered_users.to_json
     else
-      erb :'users/index', :locals => { :users => ordered_users }
+      erb :'users/index.html', :locals => { :users => ordered_users }
     end
   end
 
   get "/users/new" do
-    erb :'users/new'
+    erb :'users/new.html'
   end
 
+  # Create new user
   post "/users" do
     add_user_with_params(params[:user])
     redirect "/users"
@@ -253,15 +246,16 @@ class PassServer < Sinatra::Base
       content_type 'application/json', :charset => 'utf-8'
       user.to_json
     else
-      erb :'users/show', :locals => { :user => user }
+      erb :'users/show.html', :locals => { :user => user }
     end
   end
   
   get "/users/:user_id/edit" do
     user = self.users.where(:id => params[:user_id]).first
-    erb :'users/edit', :locals => { :user => user }
+    erb :'users/edit.html', :locals => { :user => user }
   end
 
+  # Update one user's details
   put "/users/:user_id" do
     update_user_with_params(params[:user_id], params[:user])
     if request.accept.include? "application/json"
@@ -272,17 +266,31 @@ class PassServer < Sinatra::Base
     end
   end
 
+  # Delete a user account
   delete "/users/:user_id" do
     delete_user(params[:user_id])
     redirect "/users"
   end
 
+  # Download one user's pass
   get "/users/:user_id/pass.pkpass" do
     deliver_pass_for_user(params[:user_id])
   end
   
+  # Retrieve the owner of the specified pass
+  # Used by the iOS app to match a pass's barcode to a user account
+  get "/user_for_pass/:pass_type_id/:serial_number/:authentication_token" do
+    pass = self.passes.where(:pass_type_id => params[:pass_type_id], :serial_number => params[:serial_number], :authentication_token => params[:authentication_token]).first
+    if pass
+      user_id = pass[:user_id]
+      redirect "/users/#{user_id}"
+    else
+      status 404
+    end
+  end
+
   ###
-  # End of development only endpoint.
+  # End of development-only endpoints.
   ###############
   
 
