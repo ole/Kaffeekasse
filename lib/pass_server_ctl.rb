@@ -408,19 +408,5 @@ if options[:push_notification]
 
   APNS.instance.close_connection
   puts "APNS connection closed."
-  
-  
 end
-
-
-
-
-
-
-
-
-
-
-
-
 
