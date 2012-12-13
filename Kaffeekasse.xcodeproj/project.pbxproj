@@ -148,14 +148,14 @@
 				5DF6E48815CFBF7000EF2095 /* MainStoryboard.storyboard */,
 				5DF6E48B15CFBF7000EF2095 /* UserListViewController.h */,
 				5DF6E48C15CFBF7000EF2095 /* UserListViewController.m */,
-				5DF6E49315CFBFD900EF2095 /* ZBarSDK */,
-				5DF6E47D15CFBF7000EF2095 /* Supporting Files */,
-				5DA5AF4B15CFCDCB0068A25B /* CKUser.h */,
-				5DA5AF4C15CFCDCB0068A25B /* CKUser.m */,
 				5DA5AF4E15CFCE810068A25B /* EditUserViewController.h */,
 				5DA5AF4F15CFCE810068A25B /* EditUserViewController.m */,
 				5DA5AF5115D016640068A25B /* CodeKollektivAPI.h */,
 				5DA5AF5215D016640068A25B /* CodeKollektivAPI.m */,
+				5DA5AF4B15CFCDCB0068A25B /* CKUser.h */,
+				5DA5AF4C15CFCDCB0068A25B /* CKUser.m */,
+				5DF6E49315CFBFD900EF2095 /* ZBarSDK */,
+				5DF6E47D15CFBF7000EF2095 /* Supporting Files */,
 			);
 			path = Kaffeekasse;
 			sourceTree = "<group>";
