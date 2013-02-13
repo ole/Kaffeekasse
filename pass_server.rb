@@ -55,23 +55,8 @@ require 'securerandom'
 require File.dirname(File.expand_path(__FILE__)) + '/lib/apns.rb'
 
 class PassServer < Sinatra::Base
-  attr_accessor :certificate_password
-  attr_accessor :hostname, :port, :pass_type_identifier
-
   configure do
     mime_type :pkpass, 'application/vnd.apple.pkpass'
-  end
-  
-  def setup_hostname
-    self.hostname = "tiefflieger.local"
-  end
-  
-  def setup_webserver_port
-    self.port = 4567
-  end
-  
-  def setup_pass_type_identifier    
-    self.pass_type_identifier = "pass.com.codekollektiv.balance"
   end
   
   def get_certificate_path
@@ -87,10 +72,6 @@ class PassServer < Sinatra::Base
   end
 
   before do
-    setup_hostname
-    setup_webserver_port
-    setup_pass_type_identifier
-
     # Load in the pass data before each request
     @db = Sequel.sqlite("data/pass_server.sqlite3")
     @passes ||= @db[:passes]
@@ -301,10 +282,10 @@ class PassServer < Sinatra::Base
       puts "Updating pass data"
       json_file_path = target_folder_path + "/pass.json"
       pass_json = JSON.parse(File.read(json_file_path))
-      pass_json["passTypeIdentifier"] = self.pass_type_identifier
+      pass_json["passTypeIdentifier"] = settings.pass_type_identifier
       pass_json["serialNumber"] = pass[:serial_number]
       pass_json["authenticationToken"] = pass[:authentication_token]
-      pass_json["webServiceURL"] = "http://#{self.hostname}:#{self.port}/"
+      pass_json["webServiceURL"] = "http://#{settings.hostname}:#{settings.port}/"
       pass_json["barcode"]["message"] = pass[:serial_number]
       pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
       pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
@@ -459,10 +440,10 @@ class PassServer < Sinatra::Base
     puts "Updating pass data"
     json_file_path = target_folder_path + "/pass.json"
     pass_json = JSON.parse(File.read(json_file_path))
-    pass_json["passTypeIdentifier"] = self.pass_type_identifier
+    pass_json["passTypeIdentifier"] = settings.pass_type_identifier
     pass_json["serialNumber"] = pass[:serial_number]
     pass_json["authenticationToken"] = pass[:authentication_token]
-    pass_json["webServiceURL"] = "http://#{self.hostname}:#{self.port}/"
+    pass_json["webServiceURL"] = "http://#{settings.hostname}:#{settings.port}/"
     pass_json["barcode"]["message"] = pass[:serial_number]
     pass_json["storeCard"]["primaryFields"][0]["value"] = user[:account_balance]
     pass_json["storeCard"]["secondaryFields"][0]["value"] = user[:name]
