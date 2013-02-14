@@ -6,3 +6,4 @@ data/passes/*
 !data/passes/template
 
 data/Certificate/*.p12
+data/Certificate/*.pem

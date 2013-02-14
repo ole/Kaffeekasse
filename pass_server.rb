@@ -438,6 +438,7 @@ class PassServer < Sinatra::Base
     # Prepare for pass signing
     pass_folder_path = target_folder_path
     pass_signing_certificate_path = get_certificate_path
+    wwdr_certificate_path = get_wwdr_certificate_path
     pass_output_path = passes_folder_path + "/#{pass_id}.pkpass"
     
     # Remove the old pass if it exists
@@ -446,7 +447,7 @@ class PassServer < Sinatra::Base
     end
     
     # Generate and sign the new pass
-    pass_signer = SignPass.new(pass_folder_path, pass_signing_certificate_path, settings.certificate_password, pass_output_path)
+    pass_signer = SignPass.new(pass_folder_path, pass_signing_certificate_path, settings.certificate_password, wwdr_certificate_path, pass_output_path)
     pass_signer.sign_pass!
     
     # Send the pass file
@@ -490,13 +491,25 @@ class PassServer < Sinatra::Base
   def get_certificate_path
     certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
     certs = Dir.glob("#{certDirectory}/*.p12")
-    if  certs.count ==0
+    if  certs.count == 0
     	puts "Couldn't find a certificate at #{certDirectory}"
       puts "Exiting"
       Process.exit
     else
       certificate_path = certs[0]
     end
+  end
+  
+  def get_wwdr_certificate_path
+      certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
+      certs = Dir.glob("#{certDirectory}/*.pem")
+      if  certs.count == 0
+      	puts "Couldn't find a certificate at #{certDirectory}"
+        puts "Exiting"
+        Process.exit
+      else
+        certificate_path = certs[0]
+      end
   end
 
   # Convenience method for parsing the authorization token header
