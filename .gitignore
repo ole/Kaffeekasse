@@ -1,1 +1,6 @@
+!data/passes/
+
+data/passes/*
+!data/passes/template
+
 data/Certificate/*.p12
