@@ -1,9 +1,10 @@
 data/pass_server.sqlite3
 
 !data/passes/
-
 data/passes/*
 !data/passes/template
 
 data/Certificate/*.p12
 data/Certificate/*.pem
+
+log/
