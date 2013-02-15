@@ -1,10 +1,16 @@
-pass_server/data/pass_server.sqlite3
+.DS_Store
 
+# pass_server
+pass_server/data/pass_server.sqlite3
 !pass_server/data/passes/
 pass_server/data/passes/*
 !pass_server/data/passes/template
-
 pass_server/data/Certificate/*.p12
 pass_server/data/Certificate/*.pem
-
 pass_server/log/
+
+# iOS app
+build/
+*.pbxuser
+*.mode1v3
+xcuserdata/
