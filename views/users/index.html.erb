@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <title>Users</title>
+  <meta name = "viewport" content = "width=device-width, initial-scale=1.0, user-scalable=no">
+  <style type="text/css" media="screen">
+    body, html {
+      font-size: 16px;
+      font-family: "Helvetica Neue";
+    }
+  </style>
+</head>
+<body>
+  <h1>Users</h1>
+  <table>
+    <caption>Users</caption>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>E-Mail</th>
+        <th>Balance</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% users.each do |user| %>
+      <tr>
+        <td><%= user[:id] %></td>
+        <td><a href="/users/<%= user[:id] %>"><%= user[:name] %></a></td>
+        <td><%= user[:email] %></td>
+        <td><%= user[:account_balance] %> EUR</td>
+        <td><a href="/users/<%= user[:id] %>/edit">Edit</a> <form action="/users/<%= user[:id] %>" method="post" style="display:inline;"><input name="_method" value="delete" type="hidden"/><input type="submit" name="commit" value="Delete"></form></td>
+      </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <p>
+    <a href="/users/new">New User</a>
+  </p>
+</body>
+</html>

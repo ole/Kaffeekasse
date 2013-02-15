@@ -1,0 +1,42 @@
+{
+  "passTypeIdentifier": "pass.com.codekollektiv.balance",
+  "formatVersion": 1,
+  "organizationName": "CodeKollektiv",
+  "serialNumber": "---",
+  "teamIdentifier": "UQBP8YQ495",
+  "webServiceURL": "---",
+  "authenticationToken": "---",
+  "description": "Balance Card for CodeKollektiv",
+  "foregroundColor": "#FFFFFF",
+  "backgroundColor": "#631313",
+  "logoText": "CodeKollektiv",
+  "locations": [
+    {
+      "latitude": 52.497181,
+      "longitude": 13.384972
+    }
+  ],
+  "barcode": {
+    "messageEncoding": "utf-8",
+    "format": "PKBarcodeFormatQR",
+    "message": "---"
+  },
+  "storeCard": {
+    "primaryFields": [
+      {
+        "key": "balance",
+        "label": "Balance",
+        "value": 0.0,
+        "currencyCode": "EUR",
+        "changeMessage": "Balance updated to %@."
+      }
+    ],
+    "secondaryFields": [
+      {
+        "key": "fullName",
+        "label": "Name",
+        "value": "---"
+      }
+    ]
+  }
+}
