@@ -10,7 +10,7 @@ pass_server/data/Certificate/*.pem
 pass_server/log/
 
 # iOS app
-build/
+iOSApp/build/
 *.pbxuser
 *.mode1v3
 xcuserdata/
