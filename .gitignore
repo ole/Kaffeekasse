@@ -1,10 +1,10 @@
-data/pass_server.sqlite3
+pass_server/data/pass_server.sqlite3
 
-!data/passes/
-data/passes/*
-!data/passes/template
+!pass_server/data/passes/
+pass_server/data/passes/*
+!pass_server/data/passes/template
 
-data/Certificate/*.p12
-data/Certificate/*.pem
+pass_server/data/Certificate/*.p12
+pass_server/data/Certificate/*.pem
 
-log/
+pass_server/log/
