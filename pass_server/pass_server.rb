@@ -197,7 +197,11 @@ class PassServer < Sinatra::Base
     if request && request.body
       request.body.rewind
       json_body = JSON.parse(request.body.read)
-      File.open(File.dirname(File.expand_path(__FILE__)) + "/log/devices.log", "a") do |f|
+      log_directory = File.dirname(File.expand_path(__FILE__)) + "/log"
+      if !File.exists?(log_directory)
+        Dir.mkdir(log_directory)
+      end
+      File.open(log_directory + "/devices.log", "a") do |f|
         f.write "[#{Time.now}] #{json_body}\n"
       end
     end
