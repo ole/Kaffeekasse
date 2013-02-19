@@ -435,6 +435,7 @@ class PassServer < Sinatra::Base
     json_file_path = target_folder_path + "/pass.json"
     pass_json = JSON.parse(File.read(json_file_path))
     pass_json["passTypeIdentifier"] = settings.pass_type_identifier
+    pass_json["teamIdentifier"] = settings.team_identifier
     pass_json["serialNumber"] = pass[:serial_number]
     pass_json["authenticationToken"] = pass[:authentication_token]
     pass_json["webServiceURL"] = "http://#{settings.hostname}:#{settings.port}/"

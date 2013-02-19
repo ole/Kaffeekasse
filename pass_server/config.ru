@@ -14,6 +14,7 @@ use Rack::MethodOverride
 PassServer.set :hostname, "tiefflieger.local"
 PassServer.set :port, 4567
 PassServer.set :pass_type_identifier, "pass.com.codekollektiv.balance"
+PassServer.set :team_identifier, "UQBP8YQ495"
 
 # Ask user for certificate password
 puts "Please enter your certificate password: "
