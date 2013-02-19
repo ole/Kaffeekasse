@@ -468,6 +468,7 @@ class PassServer < Sinatra::Base
   end
 
   def push_update_for_pass(pass_id)
+    APNS.certificate_password = settings.certificate_password
     APNS.instance.open_connection("production")
     puts "Opening connection to APNS."
 
@@ -504,7 +505,7 @@ class PassServer < Sinatra::Base
     certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
     certs = Dir.glob("#{certDirectory}/*.p12")
     if  certs.count == 0
-    	puts "Couldn't find a certificate at #{certDirectory}"
+      puts "Couldn't find a certificate at #{certDirectory}"
       puts "Exiting"
       Process.exit
     else
@@ -516,7 +517,7 @@ class PassServer < Sinatra::Base
       certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
       certs = Dir.glob("#{certDirectory}/*.pem")
       if  certs.count == 0
-      	puts "Couldn't find a certificate at #{certDirectory}"
+        puts "Couldn't find a certificate at #{certDirectory}"
         puts "Exiting"
         Process.exit
       else

@@ -50,13 +50,19 @@ require 'openssl'
 
 class APNS
   include Singleton
-  attr_accessor :config, :certificate, :socket, :ssl_socket, :certificate_password
+  attr_accessor :config, :certificate, :socket, :ssl_socket
+
+  @@certificate_password = nil
+  
+  def self.certificate_password=(password)
+    @@certificate_password = password
+  end
 
   def get_certificate_path
-    certDirectory = File.dirname(File.expand_path(__FILE__)) + "/../Data/Certificate"
+    certDirectory = File.dirname(File.expand_path(__FILE__)) + "/../data/Certificate"
     certs = Dir.glob("#{certDirectory}/*.p12")
     if  certs.count ==0
-	puts "Couldn't find a certificate at #{certDirectory}"
+        puts "Couldn't find a certificate at #{certDirectory}"
         puts "Exiting"
         Process.exit
     else
@@ -65,8 +71,8 @@ class APNS
   end
   
   def initialize
-    self.certificate_password = get_certificate_password
-    self.certificate = load_certificate(get_certificate_path, self.certificate_password)
+    @@certificate_password ||= get_certificate_password
+    self.certificate = load_certificate(get_certificate_path, @@certificate_password)
   end
   
   def get_certificate_password
@@ -77,11 +83,12 @@ class APNS
   end
   
   def load_certificate(path, password=nil)
+    puts "Loading push certificate."
     context = OpenSSL::SSL::SSLContext.new
     context.verify_mode = OpenSSL::SSL::VERIFY_NONE
     
     # Import the certificate
-    p12_certificate = OpenSSL::PKCS12::new(File.read(path), self.certificate_password)
+    p12_certificate = OpenSSL::PKCS12::new(File.read(path), password || @@certificate_password)
     
     context.cert = p12_certificate.certificate
     context.key = p12_certificate.key
@@ -92,7 +99,6 @@ class APNS
   
   def open_connection(environment='sandbox')
     if self.certificate.class != OpenSSL::SSL::SSLContext
-      puts "hello"
       load_certificate
     end
     
