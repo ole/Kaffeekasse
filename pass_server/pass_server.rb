@@ -421,7 +421,7 @@ class PassServer < Sinatra::Base
     target_folder_path = passes_folder_path + "/#{pass_id}"
     
     # Delete pass folder if it already exists
-    if (Dir.exists?(target_folder_path))
+    if (File.exists?(target_folder_path))
       puts "[ ok ] Deleting existing pass data."
       FileUtils.remove_dir(target_folder_path)
     end
