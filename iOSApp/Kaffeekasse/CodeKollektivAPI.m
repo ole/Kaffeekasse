@@ -7,8 +7,7 @@
 //
 
 #import "CodeKollektivAPI.h"
-
-static NSString * const APIEndpoint = @"http://tiefflieger.local:4567";
+#import "Config.h"
 
 @implementation CodeKollektivAPI
 
@@ -86,7 +85,7 @@ static NSString * const APIEndpoint = @"http://tiefflieger.local:4567";
 
 - (void)sendJSONRequestWithMethod:(NSString *)method path:(NSString *)path formFields:(NSDictionary *)formFields completionHandler:(CodeKollektivAPICompletionHandler)completionHandler
 {
-    NSString *urlString = [NSString stringWithFormat:@"%@%@", APIEndpoint, path];
+    NSString *urlString = [NSString stringWithFormat:@"%@%@", CKAPIEndpoint, path];
     NSURL *url = [NSURL URLWithString:urlString];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:method];
