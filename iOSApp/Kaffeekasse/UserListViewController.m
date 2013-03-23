@@ -7,7 +7,7 @@
 //
 
 #import "UserListViewController.h"
-#import "CodeKollektivAPI.h"
+#import "CKAPI.h"
 
 @interface UserListViewController ()
 
@@ -56,7 +56,7 @@
 
 - (void)loadUsersWithCompletionHandler:(void (^)(BOOL success))completionHandler
 {
-    CodeKollektivAPI *api = [[CodeKollektivAPI alloc] init];
+    CKAPI *api = [[CKAPI alloc] init];
     [api loadUsers:^(BOOL success, id result, NSError *error) {
         if (success) {
             NSLog(@"%@", result);
@@ -108,7 +108,7 @@
     }
 
     NSLog(@"Barcode text: %@", symbol.data);
-    CodeKollektivAPI *api = [[CodeKollektivAPI alloc] init];
+    CKAPI *api = [[CKAPI alloc] init];
     [api loadUserWithBarcodeText:symbol.data completionHandler:^(BOOL success, id result, NSError *error) {
         if (success) {
             CKUser *user = result;
@@ -125,7 +125,7 @@
 
 - (void)editUserViewController:(EditUserViewController *)controller didUpdateUser:(CKUser *)updatedUser
 {
-    CodeKollektivAPI *api = [[CodeKollektivAPI alloc] init];
+    CKAPI *api = [[CKAPI alloc] init];
     [api updateUser:updatedUser completionHandler:^(BOOL success, NSError *error) {
         if (success) {
             NSLog(@"Updated user");

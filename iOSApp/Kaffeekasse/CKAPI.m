@@ -1,15 +1,15 @@
 //
-//  CodeKollektivAPI.m
+//  CKAPI.m
 //  Kaffeekasse
 //
 //  Created by Ole Begemann on 06.08.12.
 //  Copyright (c) 2012 Ole Begemann. All rights reserved.
 //
 
-#import "CodeKollektivAPI.h"
+#import "CKAPI.h"
 #import "Config.h"
 
-@implementation CodeKollektivAPI
+@implementation CKAPI
 
 - (void)loadUsers:(CodeKollektivAPICompletionHandler)completionHandler
 {

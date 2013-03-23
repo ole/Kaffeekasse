@@ -12,7 +12,7 @@
 		5D5089E0167A2B78001C3D39 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 5D5089DE167A2B78001C3D39 /* Default@2x.png */; };
 		5DA5AF4D15CFCDCB0068A25B /* CKUser.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DA5AF4C15CFCDCB0068A25B /* CKUser.m */; };
 		5DA5AF5015CFCE810068A25B /* EditUserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DA5AF4F15CFCE810068A25B /* EditUserViewController.m */; };
-		5DA5AF5315D016640068A25B /* CodeKollektivAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DA5AF5215D016640068A25B /* CodeKollektivAPI.m */; };
+		5DA5AF5315D016640068A25B /* CKAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DA5AF5215D016640068A25B /* CKAPI.m */; };
 		5DD7E67816FDAB9C0025E88D /* Config.m in Sources */ = {isa = PBXBuildFile; fileRef = 5DD7E67716FDAB9B0025E88D /* Config.m */; };
 		5DF6E47715CFBF7000EF2095 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DF6E47615CFBF7000EF2095 /* UIKit.framework */; };
 		5DF6E47915CFBF7000EF2095 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DF6E47815CFBF7000EF2095 /* Foundation.framework */; };
@@ -42,8 +42,8 @@
 		5DA5AF4C15CFCDCB0068A25B /* CKUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CKUser.m; sourceTree = "<group>"; };
 		5DA5AF4E15CFCE810068A25B /* EditUserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditUserViewController.h; sourceTree = "<group>"; };
 		5DA5AF4F15CFCE810068A25B /* EditUserViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EditUserViewController.m; sourceTree = "<group>"; };
-		5DA5AF5115D016640068A25B /* CodeKollektivAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodeKollektivAPI.h; sourceTree = "<group>"; };
-		5DA5AF5215D016640068A25B /* CodeKollektivAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CodeKollektivAPI.m; sourceTree = "<group>"; };
+		5DA5AF5115D016640068A25B /* CKAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CKAPI.h; sourceTree = "<group>"; };
+		5DA5AF5215D016640068A25B /* CKAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CKAPI.m; sourceTree = "<group>"; };
 		5DD7E67616FDAB9B0025E88D /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
 		5DD7E67716FDAB9B0025E88D /* Config.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Config.m; sourceTree = "<group>"; };
 		5DF6E47215CFBF7000EF2095 /* Kaffeekasse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kaffeekasse.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -155,8 +155,8 @@
 				5DF6E48C15CFBF7000EF2095 /* UserListViewController.m */,
 				5DA5AF4E15CFCE810068A25B /* EditUserViewController.h */,
 				5DA5AF4F15CFCE810068A25B /* EditUserViewController.m */,
-				5DA5AF5115D016640068A25B /* CodeKollektivAPI.h */,
-				5DA5AF5215D016640068A25B /* CodeKollektivAPI.m */,
+				5DA5AF5115D016640068A25B /* CKAPI.h */,
+				5DA5AF5215D016640068A25B /* CKAPI.m */,
 				5DA5AF4B15CFCDCB0068A25B /* CKUser.h */,
 				5DA5AF4C15CFCDCB0068A25B /* CKUser.m */,
 				5DF6E49315CFBFD900EF2095 /* ZBarSDK */,
@@ -318,7 +318,7 @@
 				5DF6E48D15CFBF7000EF2095 /* UserListViewController.m in Sources */,
 				5DA5AF4D15CFCDCB0068A25B /* CKUser.m in Sources */,
 				5DA5AF5015CFCE810068A25B /* EditUserViewController.m in Sources */,
-				5DA5AF5315D016640068A25B /* CodeKollektivAPI.m in Sources */,
+				5DA5AF5315D016640068A25B /* CKAPI.m in Sources */,
 				5DD7E67816FDAB9C0025E88D /* Config.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
