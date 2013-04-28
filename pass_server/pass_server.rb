@@ -313,6 +313,8 @@ class PassServer < Sinatra::Base
 
     # Also create a pass for the new user
     add_pass_for_user(new_user_id)
+    
+    return new_user_id
   end
 
   def update_user_with_params(user_id, p)
