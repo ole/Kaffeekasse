@@ -46,17 +46,17 @@ class PassServer < Sinatra::Base
   #
   post '/v1/devices/:device_id/registrations/:pass_type_id/:serial_number' do
     puts "#<RegistrationRequest device_id: #{params[:device_id]}, pass_type_id: #{params[:pass_type_id]}, serial_number: #{params[:serial_number]}, authentication_token: #{authentication_token}, push_token: #{push_token}>"
-    
+
     # Validate that the request is authorized to deal with the pass referenced
     if is_auth_token_valid?(params[:serial_number], params[:pass_type_id], authentication_token)
       puts '[ ok ] Pass and authentication token match.'
-      
+
       # Validate that the device has not previously registered
       if !device_has_registration_for_serial_number?(params[:device_id], params[:serial_number])
         # No registration found, lets add the device
         puts '[ ok ] Registering device.'
         add_device_registration(params[:device_id], push_token, params[:pass_type_id], params[:serial_number])
-        
+
         # Return a 201 CREATED status
         status 201
       else
@@ -65,7 +65,7 @@ class PassServer < Sinatra::Base
         puts '[ ok ] Device is already registered.'
         status 200
       end
-      
+
     else
       # The device did not statisfy the authentication requirements
       # Return a 401 NOT AUTHORIZED response
@@ -79,7 +79,7 @@ class PassServer < Sinatra::Base
   #
   # get all serial #s associated with a device for passes that need an update
   # Optionally with a query limiter to scope the last update since
-  # 
+  #
   # GET /v1/devices/<deviceID>/registrations/<typeID>
   # GET /v1/devices/<deviceID>/registrations/<typeID>?passesUpdatedSince=<tag>
   #
@@ -95,7 +95,7 @@ class PassServer < Sinatra::Base
     # Check first that the device has registered with the service
     if device_has_any_registrations?(params[:device_id])
       puts '[ ok ] Device registration found.'
-      
+
       # Find the registrations for the device
       # The passesUpdatedSince param is optional for scoping the update query
       updated_since = nil;
@@ -108,7 +108,7 @@ class PassServer < Sinatra::Base
       if registered_passes.count > 0
         # Found passes that could be updated for this device
         puts '[ ok ] Found passes that could be updated for this device.'
-        
+
         # Build the response object
         update_time = DateTime.now.strftime('%s')
         updatable_passes_payload = { :lastUpdated => update_time }
@@ -119,7 +119,7 @@ class PassServer < Sinatra::Base
         puts '[ ok ] No passes found that could be updated for this device.'
         status 204
       end
-      
+
     else
       # This device is not currently registered with the service
       puts '[ fail ] Device is not registered.'
@@ -131,7 +131,7 @@ class PassServer < Sinatra::Base
   # Unregister
   #
   # unregister a device to receive push notifications for a pass
-  # 
+  #
   # DELETE /v1/devices/<deviceID>/registrations/<passTypeID>/<serial#>
   # Header: Authorization: ApplePass <authenticationToken>
   #
@@ -140,11 +140,11 @@ class PassServer < Sinatra::Base
   # --> if disassociation succeeded: 200
   # --> if not authorized: 401
   #
-  delete "/v1/devices/:device_id/registrations/:pass_type_id/:serial_number" do 
+  delete "/v1/devices/:device_id/registrations/:pass_type_id/:serial_number" do
     puts "#<UnregistrationRequest device_id: #{params[:device_id]}, pass_type_id: #{params[:pass_type_id]}, serial_number: #{params[:serial_number]}, authentication_token: #{authentication_token}>"
     if is_auth_token_valid?(params[:serial_number], params[:pass_type_id], authentication_token)
       puts '[ ok ] Pass and authentication token match.'
-      
+
       # Validate that the device has previously registered
       # Note: this is done with a composite key that is combination of the device_id and the pass serial_number
       if device_has_registration_for_serial_number?(params[:device_id], params[:serial_number])
@@ -155,14 +155,14 @@ class PassServer < Sinatra::Base
         puts '[ fail ] Registration does not exist.'
         status 401
       end
-    
+
     else
       # Not authorized
       puts '[ fail ] Not authorized.'
       status 401
     end
   end
-  
+
 
   # Pass delivery
   #
@@ -183,7 +183,7 @@ class PassServer < Sinatra::Base
       status 401
     end
   end
-  
+
 
   # Logging/Debugging from the device
   #
@@ -207,12 +207,12 @@ class PassServer < Sinatra::Base
     end
     status 200
   end
-  
-  
+
+
   ################
   # FOR DEVELOPMENT PURPOSES ONLY
   # These endpoints allow developers to create/edit users and download passes.
-  # 
+  #
   # NOTE: These endpoints are not part of the offical passbook API and do not implement
   # any authentication/authorization controls whatsoever.
   # They should only be used for development purposes.
@@ -253,7 +253,7 @@ class PassServer < Sinatra::Base
       erb :'users/show.html', :locals => { :user => user }
     end
   end
-  
+
   get "/users/:user_id/edit" do
     user = self.users.where(:id => params[:user_id]).first
     erb :'users/edit.html', :locals => { :user => user }
@@ -280,7 +280,7 @@ class PassServer < Sinatra::Base
   get "/users/:user_id/pass.pkpass" do
     deliver_pass_for_user(params[:user_id])
   end
-  
+
   # Retrieve the owner of the specified pass
   # Used by the iOS app to match a pass's barcode to a user account
   get "/user_for_pass/:pass_type_id/:serial_number/:authentication_token" do
@@ -296,10 +296,10 @@ class PassServer < Sinatra::Base
   ###
   # End of development-only endpoints.
   ###############
-  
+
 
   private
-  
+
   def add_user(email, name, account_balance)
     p = { :email => email, :name => name, :account_balance => account_balance }
     add_user_with_params(p)
@@ -313,7 +313,7 @@ class PassServer < Sinatra::Base
 
     # Also create a pass for the new user
     add_pass_for_user(new_user_id)
-    
+
     return new_user_id
   end
 
@@ -322,7 +322,7 @@ class PassServer < Sinatra::Base
     p[:updated_at] = now
     user = self.users.where(:id => user_id)
     user.update(p)
-  
+
     # Also update updated_at field of user's pass
     pass = self.passes.where(:user_id => user_id)
     pass.update(:updated_at => now)
@@ -339,7 +339,7 @@ class PassServer < Sinatra::Base
   def add_pass_for_user(user_id)
     serial_number = new_serial_number
     auth_token = new_authentication_token
-    add_pass(serial_number, auth_token, "pass.com.codekollektiv.balance", user_id)
+    add_pass(serial_number, auth_token, settings.pass_type_identifier, user_id)
   end
 
   def add_pass(serial_number, authentication_token, pass_type_id, user_id)
@@ -395,7 +395,7 @@ class PassServer < Sinatra::Base
 
   def registered_passes_for_device(device_id, pass_type_identifier, updated_since)
     registered_serial_numbers = self.registrations.where(:device_id => device_id, :pass_type_id => pass_type_identifier).collect { |r| r[:serial_number] }
-    
+
     if updated_since
       registered_passes = self.passes.where(:serial_number => registered_serial_numbers).filter('updated_at IS NULL OR updated_at >= ?', updated_since)
     else
@@ -421,7 +421,7 @@ class PassServer < Sinatra::Base
     passes_folder_path = File.dirname(File.expand_path(__FILE__)) + "/data/passes"
     template_folder_path = passes_folder_path + "/template"
     target_folder_path = passes_folder_path + "/#{pass_id}"
-    
+
     # Delete pass folder if it already exists
     if (File.exists?(target_folder_path))
       puts "[ ok ] Deleting existing pass data."
@@ -455,16 +455,16 @@ class PassServer < Sinatra::Base
     pass_signing_certificate_path = get_certificate_path
     wwdr_certificate_path = get_wwdr_certificate_path
     pass_output_path = passes_folder_path + "/#{pass_id}.pkpass"
-    
+
     # Remove the old pass if it exists
     if File.exists?(pass_output_path)
       File.delete(pass_output_path)
     end
-    
+
     # Generate and sign the new pass
     pass_signer = SignPass.new(pass_folder_path, pass_signing_certificate_path, settings.certificate_password, wwdr_certificate_path, pass_output_path)
     pass_signer.sign_pass!
-    
+
     # Send the pass file
     puts '[ ok ] Sending pass file.'
     send_file(pass_output_path, :type => :pkpass)
@@ -515,7 +515,7 @@ class PassServer < Sinatra::Base
       certificate_path = certs[0]
     end
   end
-  
+
   def get_wwdr_certificate_path
       certDirectory = File.dirname(File.expand_path(__FILE__)) + "/data/Certificate"
       certs = Dir.glob("#{certDirectory}/*.pem")
@@ -534,7 +534,7 @@ class PassServer < Sinatra::Base
       env['HTTP_AUTHORIZATION'].split(" ").last
     end
   end
-  
+
   # Convenience method for parsing the pushToken out of a JSON POST body
   def push_token
     if request && request.body
