@@ -1,3 +1,5 @@
+**NOTE** This code is not being maintained and not safe. I'm only leaving it here for reference. Don't use it!
+
 # iOS Passbook Tutorial
 
 Ole Begemann, February 2013.
